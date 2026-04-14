@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IR Code Table</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 2rem;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    .hint {
+      margin: 0.5rem 0 1rem;
+      color: #4b5563;
+      font-size: 0.95rem;
+    }
+
+    .section-title {
+      margin-top: 2rem;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+    }
+
+    .nowrap {
+      white-space: nowrap;
+    }
+
+    .status {
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      margin-bottom: 1rem;
+      border: 1px solid transparent;
+      font-size: 0.95rem;
+    }
+
+    .status.ok {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+
+    .status.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .inline-form {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 6px;
+      background: #111827;
+      color: #fff;
+      padding: 0.4rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn:hover {
+      background: #1f2937;
+    }
+
+    .btn.running {
+      background: #0b6aa9;
+    }
+
+    .repeat-input {
+      width: 4.25rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 0.3rem 0.4rem;
+      font-size: 0.85rem;
+    }
+
+    .batch-tools {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 0.65rem 0 0.9rem;
+    }
+
+    .batch-status {
+      font-size: 0.85rem;
+      color: #1f2937;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
+    }
+
+    .table-container {
+      border-radius: 8px;
+      overflow: auto;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      background: white;
+      margin-bottom: 1.5rem;
+    }
+
+    .table-container.primary {
+      max-height: 460px;
+    }
+
+    .table-container.secondary {
+      max-height: 320px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-bottom: 0;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: #111827;
+      color: #f9fafb;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    #profiles-table tbody tr.verified-row td {
+      background: #dbeafe;
+      border-bottom-color: #bfdbfe;
+    }
+  </style>
+</head>
+<body>
+  <h1>Captured IR Codes</h1>
+  <p class="hint">
+    Robust mode active: captures are classified as decoded, unknown, or noise.
+    Stable signatures require at least {{ stable_min_count }} repeats.
+  </p>
+  <p class="hint">
+    Replay topic: <span class="mono">{{ replay_topic }}</span> |
+    Require stable: <strong>{{ 1 if replay_require_stable else 0 }}</strong> |
+    Allow unknown: <strong>{{ 1 if replay_allow_unknown else 0 }}</strong>
+  </p>
+
+  {% if replay_feedback and replay_feedback.message %}
+  <div class="status {{ 'ok' if replay_feedback.status == 'ok' else 'error' }}">
+    {{ replay_feedback.message }}
+    {% if replay_feedback.signature %}
+    <span class="mono">({{ replay_feedback.signature }})</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <h2 class="section-title">MQTT Live Monitor</h2>
+  <p class="hint">
+    Monitor estilo serial para acompanhar mensagens MQTT recebidas (RX) e enviadas (TX) em tempo real.
+  </p>
+  <div class="inline-form" style="margin-bottom: 0.5rem;">
+    <button id="monitor-pause" class="btn" type="button">Pause</button>
+    <button id="monitor-clear" class="btn" type="button">Clear View</button>
+  </div>
+  <pre id="mqtt-monitor" class="mono" style="height: 240px; overflow: auto; background: #0f172a; color: #e2e8f0; padding: 0.75rem; border-radius: 8px; margin-top: 0.4rem;">Connecting to monitor...</pre>
+
+  <h2 class="section-title">Verify Custom</h2>
+  <p class="hint">
+    Use isto para validar emissao fisica do LED IR no alvo, mesmo sem perfil decoded estavel.
+    Compat mode: <strong>{{ 1 if manual_send_compat_dual else 0 }}</strong> |
+    Max bits: <strong>{{ irsend_max_bits }}</strong> |
+    AC blocked: <strong>{{ 1 if irsend_block_ac_protocols else 0 }}</strong>
+  </p>
+  <form id="manual-replay-form" method="post" action="/replay/manual" class="inline-form" style="margin-bottom: 1.5rem;">
+    <label class="hint" style="margin: 0;">Protocol</label>
+    <select class="repeat-input" style="width: 8rem;" name="protocol">
+      {% for protocol in play_custom_protocol_options %}
+      <option value="{{ protocol }}" {{ 'selected' if protocol == manual_default_protocol else '' }}>{{ protocol }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="hint" style="margin: 0;">Bits</label>
+    <select class="repeat-input" style="width: 6rem;" name="bits">
+      {% for bit_size in play_custom_bits_options %}
+      <option value="{{ bit_size }}" {{ 'selected' if bit_size == manual_default_bits else '' }}>{{ bit_size }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="hint" style="margin: 0;">Hex</label>
+    <input class="repeat-input" style="width: 10rem;" type="text" name="hex" value="{{ manual_default_data }}">
+
+    <label class="hint" style="margin: 0;">Repeats</label>
+    <input class="repeat-input" type="number" name="repeats" min="0" max="{{ replay_max_repeats }}" value="{{ manual_default_repeats }}">
+
+    <button class="btn" type="submit">Verify Custom</button>
+  </form>
+
+  <div class="batch-tools">
+    <label class="hint" style="margin: 0;" for="batch-repeats">Batch repeats</label>
+    <input id="batch-repeats" class="repeat-input" type="number" min="0" max="{{ replay_max_repeats }}" value="{{ replay_default_repeats }}" data-default="{{ replay_default_repeats }}">
+    <button id="verify-last" class="btn" type="button">Verify Last</button>
+    <button id="verify-all" class="btn" type="button">Verify All</button>
+    <span id="verify-batch-status" class="batch-status">Idle</span>
+  </div>
+
+  <h2 class="section-title">Comandos reconhecidos/indexados (tabela principal)</h2>
+  <p class="hint">
+    Tabela principal de teste para perfis decoded. Verify Last e Verify All usam esta lista.
+  </p>
+  <div class="table-container primary">
+    <table id="profiles-table">
+      <thead>
+        <tr>
+          <th>Assinatura</th>
+          <th>ProtocoloHint</th>
+          <th>Hexadecimal</th>
+          <th>Tamanho</th>
+          <th>Classe</th>
+          <th>Count</th>
+          <th>Stable</th>
+          <th>ReplayMode</th>
+          <th>ReplayJSON</th>
+          <th>FirstSeen</th>
+          <th>LastSeen</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set decoded_rows = namespace(count=0) %}
+        {% for profile in profiles %}
+        {% set stable = profile.Stable == '1' %}
+        {% set is_noise = profile.Classe == 'noise' %}
+        {% set is_unknown = profile.Classe == 'unknown' %}
+        {% set can_replay = stable and (not is_noise) and ((not is_unknown) or replay_allow_unknown) %}
+        {% if profile.Classe == 'decoded' %}
+        {% set decoded_rows.count = decoded_rows.count + 1 %}
+        <tr data-signature="{{ profile.Assinatura }}" data-can-replay="{{ '1' if can_replay else '0' }}">
+          <td class="mono">{{ profile.Assinatura }}</td>
+          <td>{{ profile.ProtocoloHint }}</td>
+          <td class="mono">{{ profile.Hexadecimal }}</td>
+          <td class="nowrap">{{ profile.Tamanho }}</td>
+          <td class="nowrap">{{ profile.Classe }}</td>
+          <td class="nowrap">{{ profile.Count }}</td>
+          <td class="nowrap">{{ profile.Stable }}</td>
+          <td class="nowrap">{{ profile.ReplayMode }}</td>
+          <td class="mono">{{ profile.ReplayJSON }}</td>
+          <td class="nowrap">{{ profile.FirstSeen }}</td>
+          <td class="nowrap">{{ profile.LastSeen }}</td>
+          <td>
+            {% if can_replay %}
+            <form method="post" action="/replay" class="inline-form">
+              <input type="hidden" name="signature" value="{{ profile.Assinatura }}">
+              <input
+                class="repeat-input"
+                type="number"
+                name="repeats"
+                min="0"
+                max="{{ replay_max_repeats }}"
+                value="{{ replay_default_repeats }}"
+                title="Repeats"
+              >
+              <button class="btn" type="submit">Testar</button>
+            </form>
+            {% elif replay_require_stable and not stable %}
+            <span class="badge">aguarde estabilidade</span>
+            {% else %}
+            <span class="badge">not ready</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        {% if decoded_rows.count == 0 %}
+        <tr>
+          <td colspan="12">No decoded profiles yet.</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section-title">Ultimos comandos capturados (referencia)</h2>
+  <div class="table-container secondary">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Timestamp</th>
+          <th>Fonte</th>
+          <th>Protocolo</th>
+          <th>Hexadecimal</th>
+          <th>Tamanho</th>
+          <th>Classe</th>
+          <th>Assinatura</th>
+          <th>ReplayJSON</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td class="nowrap">{{ row.ID }}</td>
+          <td class="nowrap">{{ row.Timestamp }}</td>
+          <td class="mono">{{ row.Fonte }}</td>
+          <td>{{ row.Protocolo }}</td>
+          <td class="mono">{{ row.Hexadecimal }}</td>
+          <td class="nowrap">{{ row.Tamanho }}</td>
+          <td class="nowrap">{{ row.Classe }}</td>
+          <td class="mono">{{ row.Assinatura }}</td>
+          <td class="mono">{{ row.ReplayJSON }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9">No IR data yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    (function () {
+      const monitor = document.getElementById('mqtt-monitor');
+      const pauseBtn = document.getElementById('monitor-pause');
+      const clearBtn = document.getElementById('monitor-clear');
+      let afterId = 0;
+      let paused = false;
+      let batchRunning = false;
+      let batchPauseRequested = false;
+
+      const verifyLastBtn = document.getElementById('verify-last');
+      const verifyAllBtn = document.getElementById('verify-all');
+      const batchRepeatsInput = document.getElementById('batch-repeats');
+      const batchStatus = document.getElementById('verify-batch-status');
+      const defaultBatchRepeats = Number.parseInt(batchRepeatsInput.getAttribute('data-default') || '0', 10);
+      const manualForm = document.getElementById('manual-replay-form');
+      const manualStorageKey = 'ir_sniffer_manual_replay_last_v1';
+
+      function saveManualState() {
+        if (!manualForm) {
+          return;
+        }
+
+        const protocolInput = manualForm.querySelector('[name="protocol"]');
+        const bitsInput = manualForm.querySelector('[name="bits"]');
+        const hexInput = manualForm.querySelector('[name="hex"]');
+        const repeatsInput = manualForm.querySelector('[name="repeats"]');
+
+        try {
+          localStorage.setItem(
+            manualStorageKey,
+            JSON.stringify({
+              protocol: protocolInput ? protocolInput.value : '',
+              bits: bitsInput ? bitsInput.value : '',
+              hex: hexInput ? hexInput.value : '',
+              repeats: repeatsInput ? repeatsInput.value : ''
+            })
+          );
+        } catch (_error) {
+          // Keep UI functional even when localStorage is unavailable.
+        }
+      }
+
+      function restoreManualState() {
+        if (!manualForm) {
+          return;
+        }
+
+        let saved = null;
+        try {
+          saved = JSON.parse(localStorage.getItem(manualStorageKey) || 'null');
+        } catch (_error) {
+          saved = null;
+        }
+
+        if (!saved || typeof saved !== 'object') {
+          return;
+        }
+
+        const protocolInput = manualForm.querySelector('[name="protocol"]');
+        const bitsInput = manualForm.querySelector('[name="bits"]');
+        const hexInput = manualForm.querySelector('[name="hex"]');
+        const repeatsInput = manualForm.querySelector('[name="repeats"]');
+
+        if (protocolInput && typeof saved.protocol === 'string' && saved.protocol) {
+          const hasOption = Array.from(protocolInput.options || []).some(function (opt) {
+            return opt.value === saved.protocol;
+          });
+          if (hasOption) {
+            protocolInput.value = saved.protocol;
+          }
+        }
+
+        if (bitsInput && typeof saved.bits === 'string' && saved.bits) {
+          const hasOption = Array.from(bitsInput.options || []).some(function (opt) {
+            return opt.value === saved.bits;
+          });
+          if (hasOption) {
+            bitsInput.value = saved.bits;
+          }
+        }
+
+        if (hexInput && typeof saved.hex === 'string' && saved.hex.trim()) {
+          hexInput.value = saved.hex.trim();
+        }
+
+        if (repeatsInput && saved.repeats !== undefined && saved.repeats !== null && String(saved.repeats).trim()) {
+          const min = Number.parseInt(repeatsInput.getAttribute('min') || '0', 10);
+          const max = Number.parseInt(repeatsInput.getAttribute('max') || '0', 10);
+          const parsed = Number.parseInt(String(saved.repeats), 10);
+          if (Number.isFinite(parsed)) {
+            const bounded = Math.max(min, Math.min(max, parsed));
+            repeatsInput.value = String(bounded);
+          }
+        }
+      }
+
+      restoreManualState();
+
+      if (manualForm) {
+        manualForm.addEventListener('input', saveManualState);
+        manualForm.addEventListener('change', saveManualState);
+        manualForm.addEventListener('submit', saveManualState);
+      }
+
+      function appendLine(line) {
+        const atBottom = monitor.scrollTop + monitor.clientHeight >= monitor.scrollHeight - 8;
+        monitor.textContent += line + '\n';
+
+        const lines = monitor.textContent.split('\n');
+        if (lines.length > 450) {
+          monitor.textContent = lines.slice(lines.length - 450).join('\n');
+        }
+
+        if (atBottom) {
+          monitor.scrollTop = monitor.scrollHeight;
+        }
+      }
+
+      async function pollMonitor() {
+        if (paused) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/monitor/events?after_id=${afterId}&limit=160`, { cache: 'no-store' });
+          const data = await response.json();
+          const events = Array.isArray(data.events) ? data.events : [];
+
+          if (afterId === 0 && events.length > 0 && monitor.textContent.startsWith('Connecting')) {
+            monitor.textContent = '';
+          }
+
+          for (const event of events) {
+            const id = Number(event.id || 0);
+            if (id > afterId) {
+              afterId = id;
+            }
+
+            const ts = event.timestamp || '-';
+            const dir = String(event.direction || '-').toUpperCase().padEnd(2, ' ');
+            const topic = event.topic || '-';
+            const payload = event.payload || '';
+            const rc = event.rc;
+            appendLine(`[${ts}] ${dir} ${topic} | rc=${rc} | ${payload}`);
+          }
+        } catch (_error) {
+          appendLine('[monitor] temporary fetch error');
+        }
+      }
+
+      pauseBtn.addEventListener('click', function () {
+        paused = !paused;
+        pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      });
+
+      clearBtn.addEventListener('click', function () {
+        monitor.textContent = '';
+      });
+
+      function setBatchUi(isRunning, text) {
+        batchRunning = isRunning;
+        verifyAllBtn.textContent = isRunning ? 'Pause' : 'Verify All';
+        verifyAllBtn.classList.toggle('running', isRunning);
+        batchStatus.textContent = text;
+      }
+
+      function getReplayableRows() {
+        return Array.from(document.querySelectorAll('#profiles-table tbody tr[data-can-replay="1"]'));
+      }
+
+      function getRowRepeats(row) {
+        const rowInput = row.querySelector('input[name="repeats"]');
+        const batchRepeats = Number.parseInt(batchRepeatsInput.value, 10);
+        if (rowInput) {
+          const rowValue = Number.parseInt(rowInput.value, 10);
+          if (Number.isFinite(rowValue)) {
+            return rowValue;
+          }
+        }
+        return Number.isFinite(batchRepeats) ? batchRepeats : defaultBatchRepeats;
+      }
+
+      async function replaySignature(signature, repeats) {
+        const response = await fetch('/replay', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ signature, repeats })
+        });
+
+        let payload = {};
+        try {
+          payload = await response.json();
+        } catch (_error) {
+          payload = {};
+        }
+
+        if (!response.ok || payload.ok === false) {
+          throw new Error(payload.message || `HTTP ${response.status}`);
+        }
+
+        return payload;
+      }
+
+      async function verifyRow(row) {
+        const signature = row.getAttribute('data-signature');
+        if (!signature) {
+          return;
+        }
+
+        const repeats = getRowRepeats(row);
+        let statusText = `Verified ${signature}`;
+
+        try {
+          await replaySignature(signature, repeats);
+        } catch (error) {
+          statusText = `Checked ${signature} with warning: ${error.message}`;
+        } finally {
+          row.classList.add('verified-row');
+          setBatchUi(batchRunning, statusText);
+        }
+      }
+
+      verifyLastBtn.addEventListener('click', async function () {
+        if (batchRunning) {
+          return;
+        }
+
+        const rows = getReplayableRows();
+        if (!rows.length) {
+          setBatchUi(false, 'No replayable rows in table');
+          return;
+        }
+
+        const lastRow = rows[rows.length - 1];
+        setBatchUi(false, 'Running Verify Last...');
+        await verifyRow(lastRow);
+      });
+
+      verifyAllBtn.addEventListener('click', async function () {
+        if (batchRunning) {
+          batchPauseRequested = true;
+          setBatchUi(true, 'Pause requested...');
+          return;
+        }
+
+        const rows = getReplayableRows();
+        if (!rows.length) {
+          setBatchUi(false, 'No replayable rows in table');
+          return;
+        }
+
+        batchPauseRequested = false;
+        setBatchUi(true, `Running Verify All (${rows.length} rows)...`);
+
+        let completed = 0;
+        for (const row of rows) {
+          if (batchPauseRequested) {
+            setBatchUi(false, `Paused after ${completed}/${rows.length} rows`);
+            return;
+          }
+
+          await verifyRow(row);
+          completed += 1;
+          setBatchUi(true, `Running Verify All... ${completed}/${rows.length}`);
+
+          await new Promise(resolve => setTimeout(resolve, 250));
+        }
+
+        setBatchUi(false, `Verify All completed (${completed}/${rows.length})`);
+      });
+
+      document.querySelectorAll('#profiles-table form[action="/replay"]').forEach(function (form) {
+        form.addEventListener('submit', function () {
+          const row = form.closest('tr');
+          if (row) {
+            row.classList.add('verified-row');
+          }
+        });
+      });
+
+      pollMonitor();
+      setInterval(pollMonitor, 1000);
+    })();
+  </script>
+</body>
+</html>

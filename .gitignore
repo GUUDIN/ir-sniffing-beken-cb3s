@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+*.pid
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+build/
+coverage/
+
+# Docker
+.docker/
+docker-data/
+mosquitto-data/
+mosquitto-log/
+
+# Firmware tooling clones
+firmware/hid_download_py/
+
+# Project runtime artifacts (do not push)
+server/data/*.csv
+server/data/raw_runs/
+server/data/ab_runs/
+server/data/ab_backups/
+firmware/backups/
+docummentation/
+
+# OS / Editor
+.DS_Store
+.vscode/
+.idea/
