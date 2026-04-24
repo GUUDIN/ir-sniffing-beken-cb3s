@@ -1,44 +1,56 @@
 # Arquitetura do Sistema - Sitezinho Local IR Sniffing
 
-## 1. Visão Geral
-Este documento descreve a arquitetura de software desenvolvida para capturar, processar, armazenar e retransmitir sinais de infravermelho (IR) utilizando o stack **OpenBeken + MQTT + Flask**.
+## 1. Visao geral
+Este documento descreve a arquitetura de software para capturar, processar, armazenar e retransmitir sinais de infravermelho com OpenBeken, MQTT e Flask.
 
-## 2. Fluxo de Dados
+## 2. Diagrama de arquitetura
 
-### 2.1 Captura (Ingestão)
-1. O hardware (CB3S) detecta um sinal IR.
-2. O OpenBeken publica o sinal no tópico MQTT `stat/obkCB3S/RESULT` (formato JSON) ou `obkCB3S/ir` (formato raw string).
-3. O servidor Flask (`app.py`) assina esses tópicos via um thread dedicado (`paho-mqtt`).
+```mermaid
+flowchart LR
+	A[Controle IR fisico] --> B[CB3S OpenBeken]
+	B -->|MQTT RESULT e ir| C[Mosquitto broker local]
+	C -->|subscribe| D[Flask app.py]
+	D --> E[(master_ir_codes.csv)]
+	D --> F[(ir_command_profiles.csv)]
+	D --> G[Painel index.html]
+	G -->|POST replay| D
+	D -->|publish IRSend| C
+	C -->|cmnd obkCB3S IRSend| B
+	B --> H[Emissor IR]
+```
 
-### 2.2 Processamento (Backend - `app.py`)
-O backend realiza as seguintes etapas críticas:
-* **Filtro de Ruído**: Ignora eventos com `Bits: 0` ou códigos hexadecimais zerados (`0x0`).
-* **Normalização**: Converte diferentes formatos de hex (ex: remove `0x`, padroniza maiúsculas).
-* **Criação de Assinaturas (Signatures)**: Gera uma chave única baseada em `Protocolo + Bits + Hexadecimal` para agrupar comandos repetidos.
-* **Classificação de Classe**: Diferencia comandos de "Controle Remoto Comum" (TV/DVD) de "Estado Completo" (Ar Condicionado).
-* **Gerador de Replay**: Constrói automaticamente o comando `IRSend` compatível com a API do OpenBeken para que o usuário possa reemitir o sinal com um clique.
+## 3. Fluxo de dados
 
-### 2.3 Persistência
-Os dados são salvos em formato CSV na pasta `server/data/`:
-* `master_ir_codes.csv`: Log histórico de todas as capturas válidas.
-* `ir_command_profiles.csv`: Catálogo consolidado de comandos únicos (perfis), facilitando a identificação semântica (ex: "Samsung TV Power").
+### 3.1 Captura
+1. O CB3S recebe o sinal de um controle fisico.
+2. O OpenBeken publica em topicos MQTT como `stat/obkCB3S/RESULT` e `obkCB3S/ir`.
+3. O backend em `server/app.py` recebe e parseia os eventos.
 
-## 3. Interface do Usuário (Frontend - `index.html`)
-A interface web é construída com **HTML5/CSS3/JavaScript (vanilla)** e oferece:
-* **Monitor em Tempo Real**: Lista os últimos sinais capturados via WebSockets ou polling.
-* **Dashboard de Perfis**: Permite dar nomes amigáveis (tags semânticas) aos códigos hexadecimais capturados.
-* **Controle de Replay**: Botões interativos para disparar comandos de infravermelho de volta para o dispositivo.
-* **Filtros Avançados**: Opção de esconder ruídos `UNKNOWN` ou frames de 0 bits.
+### 3.2 Processamento
+1. Filtro de ruido para frames nulos e formatos ambiguos.
+2. Normalizacao de hexadecimal e bits.
+3. Geracao de assinatura para agrupamento.
+4. Classificacao de classe de captura, incluindo sinal de ar-condicionado.
+5. Preparacao de payload de replay para `IRSend`.
 
-## 4. Tecnologias Utilizadas
-* **Linguagem**: Python 3.12+
-* **Framework Web**: Flask
-* **Processamento de Dados**: Pandas
-* **Protocolo de Comunicação**: MQTT (Eclipse Mosquitto)
-* **Firmware IoT**: OpenBeken (baseado no SDK Beken BK7231N)
+### 3.3 Armazenamento
+Persistencia principal em CSV local:
+1. `server/data/master_ir_codes.csv` com historico de capturas.
+2. `server/data/ir_command_profiles.csv` com perfis consolidados.
 
-## 5. Como Executar o Servidor
-1. Ative o ambiente virtual: `source .venv/bin/activate`
-2. Instale as dependências: `pip install -r server/requirements.txt`
-3. Execute o app: `python server/app.py`
-4. Acesse: `http://localhost:5050`
+Persistencia complementar recomendada:
+1. Exportacao JSON de snapshot para auditoria e backup offline.
+
+## 4. Componentes principais
+1. Backend Flask em `server/app.py` com ingestao MQTT, stream SSE, monitor de eventos e endpoints de replay.
+2. Frontend em `server/templates/index.html` com painel de captura, filtros e controles de replay.
+3. Broker MQTT local via Docker Compose em `docker-compose.yml`.
+
+## 5. Durabilidade de dados
+1. CSV ja fica fora de container quando o backend roda localmente.
+2. O broker Mosquitto foi configurado com volume local em `runtime/mosquitto/data` e `runtime/mosquitto/log`.
+3. Para backup operacional, usar exportacao JSON periodica.
+
+## 6. Guias relacionados
+1. Operacao de rede e persistencia: `docs/OPERACAO_REDE_PERSISTENCIA.md`.
+2. Baterias de testes ponta a ponta: `docs/PLANO_TESTES_SISTEMA.md`.

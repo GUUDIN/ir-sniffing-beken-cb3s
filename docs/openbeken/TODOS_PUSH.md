@@ -8,18 +8,24 @@ Data de atualizacao: 2026-04-14
 - [x] Executar matriz A/B de `IRParam` (Vencedor: 24 20).
 - [x] Consolidar documentação de Arquitetura de Software em `docs/ARQUITETURA_SISTEMA.md`.
 - [x] Confirmar visualizacao completa no painel local `server` na porta 5050 com dados reais.
+- [x] Publicar repositorio remoto no GitHub (`GUUDIN/ir-sniffing-beken-cb3s`).
+- [x] Ativar persistencia do broker fora de container (`runtime/mosquitto/data` e `runtime/mosquitto/log`).
+- [x] Criar snapshot JSON operacional (`scripts/export_ir_snapshot.py`).
+- [x] Criar plano de testes em baterias (`docs/PLANO_TESTES_SISTEMA.md`).
 
 ## Pendencias para proxima rodada tecnica
 - [ ] Validar envio IR em alvo externo (equipamento controlado) alem do LED local.
-- [ ] Criar repositório remoto no GitHub e realizar o primeiro Push.
+- [ ] Reservar IP fixo no roteador para MAC `C8:47:8C:00:00:00` e validar reboot duplo.
 - [ ] Adicionar sistema de autenticação simples no Dashboard (opcional).
 - [ ] Realizar teste de longa duração (stress test) na captura de AC.
+- [ ] Executar bateria completa A/B/C/D/E definida em `docs/PLANO_TESTES_SISTEMA.md`.
 
 ## Status operacional de hoje (2026-04-24)
 - [x] Broker MQTT local ativo.
 - [x] Backend Flask ativo e estável.
 - [x] Dispositivo OBK configurado com `IRParam 24 20` via autoexec.bat.
 - [x] Logs de teste A/B movidos para histórico (`server/data/ab_runs`).
+- [x] Snapshot JSON validado em `server/data/snapshots`.
 
 ### Acao imediata durante a sessao AC
 - [ ] Pressionar sequencia fixa no controle (Power, Temp+, Temp-, Mode, Fan) com 5 repeticoes por tecla.

@@ -48,6 +48,7 @@ server/data/*.csv
 server/data/raw_runs/
 server/data/ab_runs/
 server/data/ab_backups/
+server/data/snapshots/
 firmware/backups/
 docummentation/
 

@@ -9,3 +9,5 @@ services:
       - "1883:1883"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./runtime/mosquitto/data:/mosquitto/data
+      - ./runtime/mosquitto/log:/mosquitto/log
