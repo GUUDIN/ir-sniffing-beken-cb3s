@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import paho.mqtt.client as mqtt
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for, Response
 
 BASE_DIR = Path(__file__).resolve().parent
 CSV_PATH = BASE_DIR / "data" / "master_ir_codes.csv"
@@ -34,6 +34,7 @@ PROFILE_COLUMNS = [
     "FirstSeen",
     "LastSeen",
     "Stable",
+    "SemanticTag",
     "ReplayMode",
     "ReplayJSON",
 ]
@@ -68,7 +69,7 @@ STABLE_MIN_COUNT = max(int(os.getenv("STABLE_MIN_COUNT", "3")), 2)
 MQTT_IRSEND_TOPIC = os.getenv("MQTT_IRSEND_TOPIC", "cmnd/obkCB3S/IRSend")
 MQTT_IRSEND_QOS = min(max(int(os.getenv("MQTT_IRSEND_QOS", "0")), 0), 2)
 REPLAY_STATUS_TOPIC = os.getenv("REPLAY_STATUS_TOPIC", "ir_sniffer/replay")
-REPLAY_REQUIRE_STABLE = os.getenv("REPLAY_REQUIRE_STABLE", "1").strip().lower() in {
+REPLAY_REQUIRE_STABLE = os.getenv("REPLAY_REQUIRE_STABLE", "0").strip().lower() in {
     "1",
     "true",
     "yes",
@@ -101,11 +102,35 @@ IRSEND_BLOCK_AC_PROTOCOLS = os.getenv("IRSEND_BLOCK_AC_PROTOCOLS", "1").strip().
     "on",
 }
 MQTT_MONITOR_MAX_EVENTS = max(int(os.getenv("MQTT_MONITOR_MAX_EVENTS", "400")), 50)
+CAPTURE_STREAM_MAX_QUEUE = max(int(os.getenv("CAPTURE_STREAM_MAX_QUEUE", "100")), 10)
+KEYPRESS_GROUP_WINDOW_MS = max(int(os.getenv("KEYPRESS_GROUP_WINDOW_MS", "140")), 0)
+CAPTURE_DEDUP_WINDOW_MS = max(int(os.getenv("CAPTURE_DEDUP_WINDOW_MS", "180")), 0)
 
 CSV_LOCK = threading.Lock()
 MQTT_MONITOR_LOCK = threading.Lock()
 MQTT_MONITOR_EVENTS = deque(maxlen=MQTT_MONITOR_MAX_EVENTS)
 MQTT_MONITOR_LAST_ID = 0
+CAPTURE_STREAM_QUEUE = deque(maxlen=CAPTURE_STREAM_MAX_QUEUE)
+CAPTURE_RECENT_GROUPS = deque(maxlen=500)
+INDEXED_RECENT_GROUPS = deque(maxlen=300)
+SEMANTIC_COMMAND_HINTS = {
+    "NEC": {
+        0x02: "power",
+        0x09: "mute",
+        0x0C: "volume_up",
+        0x0D: "volume_down",
+        0x10: "channel_up",
+        0x11: "channel_down",
+    },
+    "SAMSUNG": {
+        0x02: "power",
+        0x09: "mute",
+        0x0C: "volume_up",
+        0x0D: "volume_down",
+        0x10: "channel_up",
+        0x11: "channel_down",
+    },
+}
 RAW_TRIPLET_RE = re.compile(r"^\s*([0-9A-Fa-f]+)\s*,\s*(0x[0-9A-Fa-f]+)\s*,\s*(\d+)\s*$")
 KV_CAPTURE_RE = re.compile(
     r"protocol(?:o)?\s*[:=]\s*([A-Za-z0-9_\-]+).*?"
@@ -258,6 +283,267 @@ def build_signature(bits: int, hex_value: str) -> str:
     return f"{max(bits, 0)}:{normalize_hex(hex_value)}"
 
 
+def _parse_hex_token_to_int(token: str):
+    cleaned = str(token or "").strip()
+    if not cleaned:
+        return None
+
+    if cleaned.lower().startswith("0x"):
+        cleaned = cleaned[2:]
+
+    if not re.fullmatch(r"[0-9A-Fa-f]+", cleaned):
+        return None
+
+    try:
+        return int(cleaned, 16)
+    except ValueError:
+        return None
+
+
+def _canonical_32bit_addr_cmd(hex_value: str):
+    normalized = normalize_hex(hex_value)
+    parts = [part.strip() for part in normalized.split(":") if part.strip()]
+
+    if len(parts) == 2:
+        left = _parse_hex_token_to_int(parts[0])
+        right = _parse_hex_token_to_int(parts[1])
+        if left is None or right is None:
+            return None
+
+        # Accept compact mirrors like 0x707:0x2 as cmd=0x07, addr=0x02.
+        if left <= 0xFF:
+            command = left & 0xFF
+        elif ((left >> 8) & 0xFF) == (left & 0xFF):
+            command = left & 0xFF
+        else:
+            return None
+
+        return right & 0xFF, command
+
+    if len(parts) != 1:
+        return None
+
+    value = _parse_hex_token_to_int(parts[0])
+    if value is None or value < 0 or value > 0xFFFFFFFF:
+        return None
+
+    b0 = (value >> 24) & 0xFF
+    b1 = (value >> 16) & 0xFF
+    b2 = (value >> 8) & 0xFF
+    b3 = value & 0xFF
+
+    addr = None
+    if b0 == ((~b1) & 0xFF):
+        addr = b1
+    elif b1 == ((~b0) & 0xFF):
+        addr = b0
+
+    if addr is None:
+        return None
+
+    if b2 == b3 or b3 == ((~b2) & 0xFF) or b2 == ((~b3) & 0xFF):
+        command = b2
+        return addr, command
+
+    return None
+
+
+def build_capture_group_key(protocol: str, bits: int, hex_value: str, signature: str) -> str:
+    protocol_name = str(protocol or "").strip().upper() or "UNKNOWN"
+    normalized_signature = str(signature or "").strip()
+
+    if bits == 32 and protocol_name not in {"", "UNKNOWN"} and not protocol_name.startswith("PROTO_ID_"):
+        addr_cmd = _canonical_32bit_addr_cmd(hex_value)
+        if addr_cmd:
+            addr, command = addr_cmd
+            return f"eq32:{protocol_name}:{addr:02X}:{command:02X}"
+
+    if normalized_signature:
+        return f"sig:{normalized_signature}"
+
+    return f"raw:{max(bits, 0)}:{normalize_hex(hex_value)}"
+
+
+def normalize_semantic_tag(value: str) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    return text[:80]
+
+
+def build_profile_group_key(profile: dict) -> str:
+    protocol = str(profile.get("ProtocoloHint", "")).strip().upper()
+    bits = _safe_int(profile.get("Tamanho"), 0)
+    hex_value = str(profile.get("Hexadecimal", "0x0"))
+    signature = str(profile.get("Assinatura", "")).strip()
+    return build_capture_group_key(protocol, bits, hex_value, signature)
+
+
+def is_raw_ir_topic(topic: str) -> bool:
+    topic_l = str(topic or "").strip().lower()
+    return topic_l.endswith("/ir") or topic_l.endswith("/ir/get")
+
+
+def has_recent_grouped_index(group_key: str, now: datetime) -> bool:
+    if KEYPRESS_GROUP_WINDOW_MS <= 0:
+        return False
+
+    window_s = KEYPRESS_GROUP_WINDOW_MS / 1000.0
+    while INDEXED_RECENT_GROUPS:
+        age_s = (now - INDEXED_RECENT_GROUPS[0]["seen_at"]).total_seconds()
+        if age_s <= window_s:
+            break
+        INDEXED_RECENT_GROUPS.popleft()
+
+    for item in reversed(INDEXED_RECENT_GROUPS):
+        if item["group_key"] != group_key:
+            continue
+        age_s = (now - item["seen_at"]).total_seconds()
+        if age_s <= window_s:
+            return True
+        break
+
+    return False
+
+
+def has_recent_capture_group(group_key: str, now: datetime) -> bool:
+    if CAPTURE_DEDUP_WINDOW_MS <= 0:
+        return False
+
+    window_s = CAPTURE_DEDUP_WINDOW_MS / 1000.0
+    while CAPTURE_RECENT_GROUPS:
+        age_s = (now - CAPTURE_RECENT_GROUPS[0]["seen_at"]).total_seconds()
+        if age_s <= window_s:
+            break
+        CAPTURE_RECENT_GROUPS.popleft()
+
+    for item in reversed(CAPTURE_RECENT_GROUPS):
+        if item["group_key"] != group_key:
+            continue
+        age_s = (now - item["seen_at"]).total_seconds()
+        if age_s <= window_s:
+            return True
+        break
+
+    return False
+
+
+def mark_capture_group(group_key: str, now: datetime) -> None:
+    CAPTURE_RECENT_GROUPS.append({"group_key": group_key, "seen_at": now})
+
+
+def mark_grouped_index(group_key: str, now: datetime) -> None:
+    INDEXED_RECENT_GROUPS.append({"group_key": group_key, "seen_at": now})
+
+
+def infer_semantic_tag(protocol: str, bits: int, hex_value: str, capture_class: str) -> str:
+    cls = str(capture_class or "").strip().lower()
+    protocol_name = str(protocol or "").strip().upper() or "UNKNOWN"
+
+    if cls == "noise":
+        return "noise"
+
+    if cls == "unknown":
+        return "unknown"
+
+    if protocol_name.startswith("PROTO_ID_") and bits >= 48:
+        return "ac_state"
+
+    if bits == 32 and protocol_name not in {"", "UNKNOWN"} and not protocol_name.startswith("PROTO_ID_"):
+        addr_cmd = _canonical_32bit_addr_cmd(hex_value)
+        if addr_cmd:
+            _addr, command = addr_cmd
+            protocol_map = SEMANTIC_COMMAND_HINTS.get(protocol_name, {})
+            command_tag = protocol_map.get(command)
+            if command_tag:
+                return command_tag
+            return f"key_0x{command:02X}"
+
+    if cls == "decoded":
+        return "decoded_generic"
+
+    return "unknown"
+
+
+def build_grouped_capture_rows(df: pd.DataFrame, profiles_df: pd.DataFrame | None = None):
+    rows = df.fillna("").to_dict(orient="records")
+    grouped = {}
+    override_tags_by_group_key = {}
+
+    if profiles_df is not None and not profiles_df.empty:
+        profile_rows = profiles_df.fillna("").to_dict(orient="records")
+        for profile in profile_rows:
+            manual_tag = normalize_semantic_tag(profile.get("SemanticTag", ""))
+            if not manual_tag:
+                continue
+
+            protocol = str(profile.get("ProtocoloHint", "")).strip().upper()
+            bits = _safe_int(profile.get("Tamanho"), 0)
+            hex_value = str(profile.get("Hexadecimal", "0x0"))
+            signature = str(profile.get("Assinatura", "")).strip()
+            group_key = build_capture_group_key(protocol, bits, hex_value, signature)
+
+            tags = override_tags_by_group_key.setdefault(group_key, [])
+            if manual_tag not in tags:
+                tags.append(manual_tag)
+
+    for row in rows:
+        protocol = str(row.get("Protocolo", "")).strip().upper()
+        bits = _safe_int(row.get("Tamanho"), 0)
+        hex_value = str(row.get("Hexadecimal", "0x0"))
+        signature = str(row.get("Assinatura", "")).strip()
+        capture_class = str(row.get("Classe", "")).strip().lower()
+        group_key = build_capture_group_key(protocol, bits, hex_value, signature)
+        row["SemanticTag"] = infer_semantic_tag(protocol, bits, hex_value, capture_class)
+        grouped.setdefault(group_key, []).append(row)
+
+    grouped_rows = []
+    for group_key, group_rows in grouped.items():
+        group_rows = sorted(group_rows, key=lambda item: _safe_int(item.get("ID"), 0))
+        latest = dict(group_rows[-1])
+        first = group_rows[0]
+
+        hex_variants = []
+        for item in group_rows:
+            normalized_hex = normalize_hex(str(item.get("Hexadecimal", "0x0")))
+            if normalized_hex not in hex_variants:
+                hex_variants.append(normalized_hex)
+
+        preview = ", ".join(hex_variants[:3])
+        if len(hex_variants) > 3:
+            preview = f"{preview}, +{len(hex_variants) - 3}"
+
+        semantic_tags = []
+        for item in group_rows:
+            tag = str(item.get("SemanticTag", "")).strip() or "unknown"
+            if tag not in semantic_tags:
+                semantic_tags.append(tag)
+
+        semantic_preview = ", ".join(semantic_tags[:3])
+        if len(semantic_tags) > 3:
+            semantic_preview = f"{semantic_preview}, +{len(semantic_tags) - 3}"
+
+        override_tags = override_tags_by_group_key.get(group_key, [])
+        if override_tags:
+            semantic_tags = list(override_tags)
+            semantic_preview = ", ".join(semantic_tags[:3])
+            if len(semantic_tags) > 3:
+                semantic_preview = f"{semantic_preview}, +{len(semantic_tags) - 3}"
+
+        latest["GroupedCount"] = len(group_rows)
+        latest["GroupedVariantsCount"] = len(hex_variants)
+        latest["GroupedHexPreview"] = preview
+        latest["GroupedFirstTimestamp"] = str(first.get("Timestamp", ""))
+        latest["GroupedLastTimestamp"] = str(latest.get("Timestamp", ""))
+        latest["GroupedSemanticVariantsCount"] = len(semantic_tags)
+        latest["GroupedSemanticPreview"] = semantic_preview
+        latest["SemanticTag"] = semantic_tags[0] if len(semantic_tags) == 1 else "mixed"
+        grouped_rows.append(latest)
+
+    grouped_rows.sort(key=lambda item: _safe_int(item.get("ID"), 0))
+    return grouped_rows
+
+
 def build_replay_json(protocol: str, bits: int, hex_value: str) -> str:
     payload = {
         "Protocol": str(protocol),
@@ -341,13 +627,29 @@ def build_irsend_legacy_command(protocol: str, bits: int, hex_value: str, repeat
     if bits <= 0 or bits > 64:
         return None
 
-    value = parse_hex_as_int(hex_value)
-    if value is None:
-        return None
+    normalized = normalize_hex(hex_value)
 
     if bits <= 32:
-        address = (value >> 16) & 0xFFFF
-        command = value & 0xFFFF
+        if ":" in normalized:
+            parts = [part.strip() for part in normalized.split(":") if part.strip()]
+            if len(parts) != 2:
+                return None
+
+            left = parts[0][2:] if parts[0].lower().startswith("0x") else parts[0]
+            right = parts[1][2:] if parts[1].lower().startswith("0x") else parts[1]
+
+            try:
+                address = int(left, 16)
+                command = int(right, 16)
+            except ValueError:
+                return None
+        else:
+            value = parse_hex_as_int(normalized)
+            if value is None:
+                return None
+
+            address = (value >> 16) & 0xFFFF
+            command = value & 0xFFFF
     else:
         # Legacy PROT-ADDR-CMD format cannot represent larger raw states well.
         return None
@@ -395,6 +697,8 @@ def upsert_profile(
     hex_value: str,
     signature: str,
     timestamp_iso: str,
+    group_key: str | None = None,
+    increment_count: bool = True,
 ):
     if capture_class == "noise":
         return profiles_df, None, False
@@ -407,6 +711,19 @@ def upsert_profile(
     mask = profiles_df["Assinatura"] == signature
     existing_indexes = profiles_df.index[mask]
 
+    if len(existing_indexes) == 0 and group_key:
+        # Merge equivalent Samsung/NEC representations into a single indexed profile.
+        for idx, existing_profile in profiles_df.iterrows():
+            candidate_group_key = build_capture_group_key(
+                str(existing_profile.get("ProtocoloHint", "")),
+                _safe_int(existing_profile.get("Tamanho"), 0),
+                str(existing_profile.get("Hexadecimal", "0x0")),
+                str(existing_profile.get("Assinatura", "")),
+            )
+            if candidate_group_key == group_key:
+                existing_indexes = pd.Index([idx])
+                break
+
     if len(existing_indexes) == 0:
         row = {
             "Assinatura": signature,
@@ -418,6 +735,7 @@ def upsert_profile(
             "FirstSeen": timestamp_iso,
             "LastSeen": timestamp_iso,
             "Stable": "0",
+            "SemanticTag": "",
             "ReplayMode": replay_mode,
             "ReplayJSON": replay_json,
         }
@@ -426,7 +744,7 @@ def upsert_profile(
 
     idx = existing_indexes[0]
     current_count = _safe_int(profiles_df.at[idx, "Count"], 0)
-    next_count = current_count + 1
+    next_count = current_count + 1 if increment_count else current_count
 
     existing_protocol = str(profiles_df.at[idx, "ProtocoloHint"]).strip().upper() or "UNKNOWN"
     if existing_protocol == "UNKNOWN" and protocol_hint != "UNKNOWN":
@@ -488,13 +806,30 @@ def backfill_profiles_from_master() -> int:
 
 
 def append_capture(protocol: str, hex_value: str, bits: int, source_topic: str):
-    timestamp_iso = datetime.now().isoformat(timespec="seconds")
+    captured_at = datetime.now()
+    timestamp_iso = captured_at.isoformat(timespec="seconds")
     normalized_hex = normalize_hex(hex_value)
     capture_class = classify_capture(protocol, bits, normalized_hex)
     signature = build_signature(bits, normalized_hex)
+    group_key = build_capture_group_key(protocol, bits, normalized_hex, signature)
     replay_json = build_replay_json(protocol, bits, normalized_hex)
 
     with CSV_LOCK:
+        if has_recent_capture_group(group_key, captured_at):
+            return {
+                "row_id": None,
+                "timestamp": timestamp_iso,
+                "capture_class": capture_class,
+                "signature": signature,
+                "group_key": group_key,
+                "replay_json": replay_json,
+                "profile_count": None,
+                "profile_stable": None,
+                "indexed": False,
+                "saved": False,
+                "duplicate": True,
+            }
+
         df = load_csv()
         profiles_df = load_profiles_csv()
         new_id = next_row_id(df)
@@ -513,6 +848,9 @@ def append_capture(protocol: str, hex_value: str, bits: int, source_topic: str):
         df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
         df.to_csv(CSV_PATH, index=False)
 
+        mark_capture_group(group_key, captured_at)
+
+        already_indexed = has_recent_grouped_index(group_key, captured_at)
         profiles_df, profile_count, profile_stable = upsert_profile(
             profiles_df,
             capture_class,
@@ -521,16 +859,39 @@ def append_capture(protocol: str, hex_value: str, bits: int, source_topic: str):
             normalized_hex,
             signature,
             timestamp_iso,
+            group_key=group_key,
+            increment_count=not already_indexed,
         )
+        if not already_indexed:
+            mark_grouped_index(group_key, captured_at)
         profiles_df.to_csv(PROFILE_CSV_PATH, index=False)
+        
+        # Push to real-time stream queue
+        CAPTURE_STREAM_QUEUE.append({
+            "ID": str(new_id),
+            "Timestamp": timestamp_iso,
+            "Fonte": source_topic,
+            "Protocolo": protocol,
+            "SemanticTag": "unknown",  # Will be fetched from profiles if available
+            "Hexadecimal": normalized_hex,
+            "Tamanho": str(bits),
+            "Classe": capture_class,
+            "Assinatura": signature,
+            "ReplayJSON": replay_json,
+        })
+        
         return {
             "row_id": new_id,
             "timestamp": timestamp_iso,
             "capture_class": capture_class,
             "signature": signature,
+            "group_key": group_key,
             "replay_json": replay_json,
             "profile_count": profile_count,
             "profile_stable": profile_stable,
+            "indexed": not already_indexed,
+            "saved": True,
+            "duplicate": False,
         }
 
 
@@ -661,15 +1022,9 @@ def on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
     protocol, hex_value, bits = parsed
 
     # When PREFER_RESULT_JSON=1 we usually ignore the `.../ir` topic because it is
-    # less structured/noisier than `.../RESULT`. However, OpenBeken may publish
-    # long AC states on `.../ir` using a reduced 2-field format without `Bits`:
-    #   "<proto_id_hex>,0x<state...>"
-    # Those captures can be missing from RESULT, so we allow them through.
-    allow_raw_ir_due_to_ac_state = False
-    if msg.topic.lower().endswith("/ir"):
-        parts = [part.strip() for part in payload.split(",") if part.strip()]
-        if len(parts) == 2 and re.fullmatch(r"[0-9A-Fa-f]+", parts[0]) and parts[1].lower().startswith("0x"):
-            allow_raw_ir_due_to_ac_state = True
+    # less structured/noisier than `.../RESULT`. Keep raw only for long/stateful
+    # captures that are likely missing from RESULT.
+    allow_raw_ir_due_to_ac_state = is_raw_ir_topic(msg.topic) and bits > 32
 
     # Optional anti-noise gate for frames that are effectively null captures.
     if DROP_NULL_CAPTURES and bits == 0 and is_effectively_zero_hex(hex_value):
@@ -679,7 +1034,7 @@ def on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
         )
         return
 
-    if PREFER_RESULT_JSON and msg.topic.lower().endswith("/ir") and not allow_raw_ir_due_to_ac_state:
+    if PREFER_RESULT_JSON and is_raw_ir_topic(msg.topic) and not allow_raw_ir_due_to_ac_state:
         print(
             f"[MQTT] Ignored raw IR topic due to PREFER_RESULT_JSON=1: "
             f"topic={msg.topic} payload={payload}"
@@ -687,10 +1042,18 @@ def on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
         return
 
     save_result = append_capture(protocol, hex_value, bits, msg.topic)
+    if not save_result.get("saved", True):
+        print(
+            f"[MQTT] Skipped duplicate capture topic={msg.topic} "
+            f"protocol={protocol} hex={hex_value} bits={bits} signature={save_result['signature']}"
+        )
+        return
+
     print(
         f"[MQTT] Saved row #{save_result['row_id']} at {save_result['timestamp']}: "
         f"topic={msg.topic} protocol={protocol} hex={hex_value} bits={bits} "
         f"class={save_result['capture_class']} signature={save_result['signature']} "
+        f"group_key={save_result['group_key']} indexed={save_result['indexed']} "
         f"profile_count={save_result['profile_count']} stable={save_result['profile_stable']}"
     )
 
@@ -734,6 +1097,8 @@ def index():
         columns=["_count_sort"]
     )
     profiles = profiles_df.fillna("").to_dict(orient="records")
+    for profile in profiles:
+        profile["GroupKey"] = build_profile_group_key(profile)
 
     replay_feedback = {
         "status": request.args.get("replay_status", "").strip().lower(),
@@ -784,6 +1149,9 @@ def profiles_api():
     )
 
     profiles = profiles_df.fillna("").to_dict(orient="records")
+    for profile in profiles:
+        profile["GroupKey"] = build_profile_group_key(profile)
+
     stable = [item for item in profiles if str(item.get("Stable", "0")) == "1"]
     return jsonify(
         {
@@ -794,6 +1162,129 @@ def profiles_api():
             "total_profiles": len(profiles),
             "stable_profiles": len(stable),
             "profiles": profiles,
+        }
+    )
+
+
+@app.route("/tables/clear", methods=["POST"])
+def clear_tables_api():
+    with CSV_LOCK:
+        current_rows = load_csv()
+        current_profiles = load_profiles_csv()
+
+        cleared_logs = len(current_rows.index)
+        cleared_profiles = len(current_profiles.index)
+
+        CSV_PATH.write_text(",".join(DEFAULT_COLUMNS) + "\n", encoding="utf-8")
+        PROFILE_CSV_PATH.write_text(",".join(PROFILE_COLUMNS) + "\n", encoding="utf-8")
+
+    return jsonify(
+        {
+            "ok": True,
+            "message": "Tabelas limpas com sucesso",
+            "cleared_logs": cleared_logs,
+            "cleared_profiles": cleared_profiles,
+        }
+    )
+
+
+@app.route("/stream/captures")
+def stream_captures():
+    """Server-Sent Events endpoint that streams new IR captures in real-time."""
+    def event_generator():
+        seen_ids = set()
+        while True:
+            # Check for new captures in the queue
+            while CAPTURE_STREAM_QUEUE:
+                capture = CAPTURE_STREAM_QUEUE.popleft()
+                capture_id = str(capture.get("ID", ""))
+                
+                # Avoid duplicate streaming
+                if capture_id not in seen_ids:
+                    seen_ids.add(capture_id)
+                    # Yield as Server-Sent Event
+                    yield f"data: {json.dumps(capture)}\n\n"
+            
+            # Small sleep to avoid busy-waiting
+            import time
+            time.sleep(0.1)
+    
+    return Response(event_generator(), mimetype="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no"
+    })
+
+
+@app.route("/profiles/semantic-tag", methods=["POST"])
+def profile_semantic_tag_update_api():
+    body = request.get_json(silent=True) or {}
+    signature = str(body.get("signature") or request.form.get("signature", "")).strip()
+    if not signature:
+        return jsonify({"ok": False, "message": "Missing profile signature"}), 400
+
+    semantic_tag = normalize_semantic_tag(body.get("semantic_tag") or request.form.get("semantic_tag", ""))
+
+    with CSV_LOCK:
+        profiles_df = load_profiles_csv()
+        match = profiles_df[profiles_df["Assinatura"] == signature]
+        if match.empty:
+            return jsonify({"ok": False, "message": f"Profile signature not found: {signature}"}), 404
+
+        idx = match.index[0]
+        profiles_df.at[idx, "SemanticTag"] = semantic_tag
+        profiles_df.to_csv(PROFILE_CSV_PATH, index=False)
+
+    return jsonify(
+        {
+            "ok": True,
+            "message": "Semantic tag saved",
+            "signature": signature,
+            "semantic_tag": semantic_tag,
+        }
+    )
+
+
+@app.route("/profiles/semantic-tag/apply-group", methods=["POST"])
+def profile_semantic_tag_apply_group_api():
+    body = request.get_json(silent=True) or {}
+    signature = str(body.get("signature") or request.form.get("signature", "")).strip()
+    if not signature:
+        return jsonify({"ok": False, "message": "Missing profile signature"}), 400
+
+    semantic_tag = normalize_semantic_tag(body.get("semantic_tag") or request.form.get("semantic_tag", ""))
+
+    with CSV_LOCK:
+        profiles_df = load_profiles_csv()
+        profiles = profiles_df.fillna("").to_dict(orient="records")
+
+        source_profile = None
+        for profile in profiles:
+            if str(profile.get("Assinatura", "")).strip() == signature:
+                source_profile = profile
+                break
+
+        if source_profile is None:
+            return jsonify({"ok": False, "message": f"Profile signature not found: {signature}"}), 404
+
+        source_group_key = build_profile_group_key(source_profile)
+        updated_indexes = []
+
+        for idx, profile in enumerate(profiles):
+            if build_profile_group_key(profile) == source_group_key:
+                profiles_df.at[idx, "SemanticTag"] = semantic_tag
+                updated_indexes.append(idx)
+
+        profiles_df.to_csv(PROFILE_CSV_PATH, index=False)
+
+    return jsonify(
+        {
+            "ok": True,
+            "message": "Semantic tag applied to equivalent commands",
+            "signature": signature,
+            "semantic_tag": semantic_tag,
+            "updated_count": len(updated_indexes),
+            "group_key": source_group_key,
         }
     )
 
@@ -881,20 +1372,27 @@ def replay_profile():
         )
 
     command_payload = build_irsend_command(protocol, bits, hex_value, repeats)
+    payloads = [command_payload]
 
-    mqtt_info = mqtt_publish(MQTT_IRSEND_TOPIC, command_payload, qos=MQTT_IRSEND_QOS, retain=False)
-    mqtt_rc = getattr(mqtt_info, "rc", -1)
-    if mqtt_rc != mqtt.MQTT_ERR_SUCCESS:
-        return replay_http_response(
-            False,
-            503,
-            f"Replay publish failed (rc={mqtt_rc})",
-            {
-                "signature": signature,
-                "topic": MQTT_IRSEND_TOPIC,
-                "payload": command_payload,
-            },
-        )
+    if MANUAL_SEND_COMPAT_DUAL:
+        legacy_payload = build_irsend_legacy_command(protocol, bits, hex_value, repeats)
+        if legacy_payload and legacy_payload not in payloads:
+            payloads.append(legacy_payload)
+
+    for payload in payloads:
+        mqtt_info = mqtt_publish(MQTT_IRSEND_TOPIC, payload, qos=MQTT_IRSEND_QOS, retain=False)
+        mqtt_rc = getattr(mqtt_info, "rc", -1)
+        if mqtt_rc != mqtt.MQTT_ERR_SUCCESS:
+            return replay_http_response(
+                False,
+                503,
+                f"Replay publish failed (rc={mqtt_rc})",
+                {
+                    "signature": signature,
+                    "topic": MQTT_IRSEND_TOPIC,
+                    "payload": payload,
+                },
+            )
 
     replay_event = {
         "Timestamp": datetime.now().isoformat(timespec="seconds"),
@@ -903,6 +1401,7 @@ def replay_profile():
         "Stable": is_stable,
         "Topic": MQTT_IRSEND_TOPIC,
         "Payload": command_payload,
+        "PayloadVariants": payloads,
         "Repeats": repeats,
     }
     mqtt_publish(REPLAY_STATUS_TOPIC, json.dumps(replay_event), qos=0, retain=False)
@@ -915,6 +1414,7 @@ def replay_profile():
             "signature": signature,
             "topic": MQTT_IRSEND_TOPIC,
             "payload": command_payload,
+            "payload_variants": payloads,
             "repeats": repeats,
             "stable": is_stable,
             "class": capture_class,

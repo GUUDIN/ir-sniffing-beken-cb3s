@@ -6,13 +6,12 @@ clearAllHandlers
 clearRepeatingEvents
 
 // 1) GPIO roles
-// Example: IR receiver on P8 (no internal pull-up).
-SetPinRole 8 IRRecv_nPup
+// IR receiver on P7 (no internal pull-up).
+SetPinRole 7 IRRecv_nPup
 
-// Example: status LED on P26.
-SetPinRole 26 LED
-SetPinChannel 26 1
-SetChannel 1 0
+// IR transmitter LED/driver control pin.
+// NOTE: this must be IRSend (not LED) for actual 38kHz IR carrier emission.
+SetPinRole 26 IRSend
 
 // 2) MQTT identity
 // This makes base topics start with ir_sniffer/...
@@ -28,8 +27,9 @@ SetFlag 14 1
 SetFlag 15 1
 SetFlag 22 1
 
-// 4) Visual feedback helper
-alias blink_ir backlog SetChannel 1 1; delay_ms 120; SetChannel 1 0
+// 4) IR emission helper
+// Human eyes usually cannot see IR LED blinking. Use a phone camera to confirm flashes.
+alias blink_ir IRSend NEC-20DF-10EF-1
 
 // NOTE:
 // OpenBeken emits generic IR events only for selected protocols (NEC/Samsung/RC5/RC6/Sony/Sharp),

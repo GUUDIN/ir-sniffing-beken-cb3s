@@ -420,3 +420,43 @@ Descricao:
 Resultado:
 1. Estrutura documental preparada para push inicial com menor ruido.
 2. Evidencias de laboratorio e requisitos ficaram em local padronizado.
+
+## Etapa 22 - Stack pronta para sessao AC (hoje)
+Data: 2026-04-17
+Descricao:
+1. Broker MQTT local confirmado em execucao (`local-mosquitto`, porta 1883).
+2. Backend Flask iniciado em `http://127.0.0.1:5050` com assinatura ativa dos topicos IR.
+3. Sessao de captura AC iniciada em log dedicado:
+	- `server/data/raw_runs/ac_capture_live_20260417_154105.log`
+4. Teste de emissao por MQTT validado no canal:
+	- `cmnd/obkCB3S/SetChannel` com payload `1 1` e `1 0`
+	- retorno observado no broker: `obkCB3S/1/get 1` e `obkCB3S/1/get 0`
+5. Script utilitario adicionado para resumo rapido da captura:
+	- `scripts/summarize_ir_log.py`
+
+Resultado:
+1. Ambiente local pronto para rodada de captura de comandos AC em tempo real.
+2. Pipeline de validacao acelerado com resumo automatico de ruido/protocolos/frames longos.
+
+Proximo passo operacional imediato:
+1. Com a captura ativa, pressionar sequencia fixa no controle AC (Power, Temp+, Temp-, Mode, Fan) e rodar o resumo do log ao final da janela.
+
+## Etapa 23 - Recuperacao do acesso web e comando IRSend
+Data: 2026-04-17
+Descricao:
+1. Hostname antigo `ircontrol-lasdpc` estava apontando para IP desatualizado (`10.0.3.154`).
+2. Endereco ativo do modulo identificado por MAC `C8:47:8C:00:00:00`: `10.0.3.155`.
+3. Ajuste de runtime aplicado no Command Tool:
+	- `SetPinRole 26 IRSend`
+	- `SetPinRole 7 IRRecv_nPup`
+	- `Restart`
+4. Apos reboot, comando `IRSend NEC-20DF-10EF-3` voltou a responder com `OK` e logs `Info:IR:IR send ...`.
+5. Alias `blink_ir` recriado em runtime para chamar IRSend direto:
+	- `alias blink_ir IRSend NEC-20DF-10EF-3`
+
+Resultado:
+1. Acesso ao OpenBeken restabelecido via IP direto.
+2. Pipeline de emissao IR restabelecido no firmware em runtime.
+
+Print salvo:
+1. docs/openbeken/prints/22_irsend_ok_runtime.png

@@ -97,8 +97,17 @@ Criterio minimo para considerar configuracao aceitavel:
 2. `taxa_nula <= 0.30`
 3. pelo menos um botao com assinatura estavel acima de `0.80`
 
-## 7. Decisao tecnica apos A/B
-1. Se `IRParam` elevar a taxa util de forma consistente, manter melhor configuracao e congelar baseline.
-2. Se `IRParam` nao elevar taxa util de forma material, o gargalo provavel passa a ser camada fisica (sensor, alimentacao, ruido, angulo, distancia) ou diferenca de stack de firmware em relacao ao build antigo.
-3. Se somente codigos curtos forem estaveis, mas frames longos nao aparecerem, priorizar caminho alternativo para AC (captura bruta dedicada e decoder especifico fora do OBK atual).
-4. Se a necessidade for transmitir AC, tratar como requisito de arquitetura: o caminho `IRSend` do OpenBeken analisado bloqueia AC e, portanto, o envio tende a exigir outra solucao (outro firmware, outro dispositivo transmissor, ou um caminho de envio RAW que nao esta presente neste stack).
+## 7. Decisao tecnica apos A/B (CONCLUÍDO)
+As rodadas de testes A/B (1 a 5) e os testes de estabilidade confirmaram que o parâmetro vencedor é o **IRParam 24 20**.
+
+### Resultados observados:
+1. **Redução de Ruído**: A incidência de frames `UNKNOWN` caiu drasticamente em comparação com o padrão (Rodada 1).
+2. **Estabilidade**: No teste de `estabilidade_irparam_24_20_result_only.csv`, obteve-se 0 registros de UNKNOWN, garantindo que os sinais capturados são majoritariamente legítimos.
+3. **Capacidade AC**: Permitiu a captura de frames mais longos sem quebra prematura do timeout de 90ms.
+
+### Configuração Final Aplicada:
+O comando foi adicionado ao `autoexec.bat` do dispositivo para persistência:
+```
+// Configuração de estabilidade IR otimizada em 2026-04-17
+IRParam 24 20
+```

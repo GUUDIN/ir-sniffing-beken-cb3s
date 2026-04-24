@@ -56,6 +56,80 @@
       border-color: #fecaca;
     }
 
+    .toast-layer {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 2100;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      max-width: min(420px, calc(100vw - 24px));
+    }
+
+    .toast {
+      pointer-events: auto;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+      padding: 0.65rem 0.75rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: start;
+      animation: toast-enter 180ms ease-out;
+    }
+
+    .toast.ok {
+      border-color: #a7f3d0;
+      background: #f0fdf4;
+    }
+
+    .toast.error {
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+
+    .toast-icon {
+      margin-top: 1px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .toast-text {
+      font-size: 0.9rem;
+      line-height: 1.35;
+      color: #111827;
+      word-break: break-word;
+    }
+
+    .toast-close {
+      border: 0;
+      background: transparent;
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .toast-close:hover {
+      color: #111827;
+    }
+
+    @keyframes toast-enter {
+      from {
+        opacity: 0;
+        transform: translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .inline-form {
       display: flex;
       align-items: center;
@@ -77,8 +151,100 @@
       background: #1f2937;
     }
 
+    .btn.danger {
+      background: #b91c1c;
+    }
+
+    .btn.danger:hover {
+      background: #991b1b;
+    }
+
     .btn.running {
       background: #0b6aa9;
+    }
+
+    .btn.loading {
+      pointer-events: none;
+      opacity: 1;
+    }
+
+    .play-btn {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      background: #111827;
+      border: 0;
+      color: #ffffff;
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .play-btn:hover {
+      background: #1f2937;
+    }
+
+    .play-label {
+      position: absolute;
+      inset: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: #f8fafc;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .play-ring {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      transform: rotate(-90deg);
+    }
+
+    .play-ring-bg {
+      fill: none;
+      stroke: #cbd5e1;
+      stroke-width: 3.2;
+    }
+
+    .play-ring-fg {
+      fill: none;
+      stroke: #22c55e;
+      stroke-width: 3.2;
+      stroke-linecap: round;
+      stroke-dasharray: 87.9646;
+      stroke-dashoffset: 87.9646;
+      transition: stroke-dashoffset 90ms linear;
+    }
+
+    .play-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: nowrap;
+    }
+
+    .play-meta {
+      font-size: 0.72rem;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+
+    .cell-meta {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.72rem;
+      color: #4b5563;
+      line-height: 1.2;
     }
 
     .repeat-input {
@@ -87,6 +253,415 @@
       border-radius: 6px;
       padding: 0.3rem 0.4rem;
       font-size: 0.85rem;
+    }
+
+    .semantic-input {
+      display: none;
+    }
+
+    .semantic-input.saving {
+      opacity: 0.7;
+    }
+
+    .semantic-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.45rem;
+      min-height: 34px;
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 4px 8px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .semantic-cell:hover {
+      background: #f3f4f6;
+    }
+
+    .semantic-cell.is-open,
+    .semantic-cell:focus-visible {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+      background: #eff6ff;
+    }
+
+    .semantic-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.24rem;
+      flex-wrap: wrap;
+      min-height: 20px;
+      flex: 1 1 auto;
+    }
+
+    .semantic-empty {
+      font-size: 12px;
+      color: #9ca3af;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .semantic-cell-caret {
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1;
+      flex: 0 0 auto;
+      margin-top: 1px;
+    }
+
+    .notion-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 20px;
+      max-width: 100%;
+      padding: 0 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .notion-tag--gray { background: #ebeced; color: #37352f; }
+    .notion-tag--brown { background: #e9e5e3; color: #64473a; }
+    .notion-tag--orange { background: #faebdd; color: #d9730d; }
+    .notion-tag--yellow { background: #fbf3db; color: #dfab01; }
+    .notion-tag--green { background: #ddedea; color: #0f7b6c; }
+    .notion-tag--blue { background: #ddebf1; color: #0b6e99; }
+    .notion-tag--purple { background: #eae4f2; color: #6940a5; }
+    .notion-tag--pink { background: #f4dfeb; color: #ad1a72; }
+    .notion-tag--red { background: #fbe4e4; color: #e03e3e; }
+
+    .semantic-popover {
+      position: fixed;
+      z-index: 1200;
+      width: min(420px, calc(100vw - 20px));
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #374151;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+      overflow: hidden;
+    }
+
+    .semantic-popover.hidden {
+      display: none;
+    }
+
+    .semantic-popover-head {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 12px;
+      background: #ffffff;
+    }
+
+    .semantic-selected-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 24px;
+      margin-bottom: 10px;
+    }
+
+    .semantic-selected-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 4px;
+    }
+
+    .semantic-remove-tag {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      opacity: 0.75;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .semantic-remove-tag:hover {
+      opacity: 1;
+    }
+
+    .semantic-filter-input {
+      width: 100%;
+      border: 0;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #111827;
+      padding: 2px 0;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .semantic-filter-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .semantic-popover-body {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .semantic-popover-body.with-editor {
+      grid-template-columns: 1fr 205px;
+    }
+
+    .semantic-options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px;
+      max-height: min(42vh, 290px);
+      overflow: auto;
+    }
+
+    .semantic-option-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      border-radius: 6px;
+      padding: 4px 6px;
+    }
+
+    .semantic-option-row:hover {
+      background: #f3f4f6;
+    }
+
+    .semantic-option-row.is-focused {
+      background: #e5e7eb;
+    }
+
+    .semantic-option-handle {
+      color: #9ca3af;
+      font-size: 13px;
+      letter-spacing: -1px;
+      user-select: none;
+    }
+
+    .semantic-option-main {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      display: inline-flex;
+      justify-content: flex-start;
+      cursor: pointer;
+      padding: 0;
+      min-width: 0;
+    }
+
+    .semantic-option-main.is-selected::after {
+      content: '✓';
+      color: #d1d5db;
+      margin-left: 8px;
+      font-size: 12px;
+    }
+
+    .semantic-option-main.create {
+      padding: 4px 0;
+    }
+
+    .semantic-option-more {
+      border: 0;
+      background: transparent;
+      color: #6b7280;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .semantic-option-more:hover {
+      background: #e5e7eb;
+    }
+
+    .semantic-popover-caption {
+      margin: 8px 12px 4px;
+      color: #6b7280;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .semantic-option-create {
+      color: #6b7280;
+      font-size: 13px;
+      opacity: 0.95;
+    }
+
+    .semantic-option-create strong {
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .semantic-option-editor {
+      border-left: 1px solid #e5e7eb;
+      background: #ffffff;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .semantic-option-editor.hidden {
+      display: none;
+    }
+
+    .semantic-editor-title,
+    .semantic-editor-color-label {
+      margin: 0;
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    .semantic-editor-name {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #111827;
+      font-size: 13px;
+      padding: 7px 9px;
+      outline: none;
+    }
+
+    .semantic-editor-name:focus-visible {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+    }
+
+    .semantic-editor-delete {
+      border: 0;
+      background: transparent;
+      color: #374151;
+      font-size: 15px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 4px;
+      border-radius: 6px;
+      width: 100%;
+      text-align: left;
+    }
+
+    .semantic-editor-delete:hover {
+      background: #f3f4f6;
+    }
+
+    .semantic-editor-delete .icon {
+      font-size: 16px;
+      width: 16px;
+      text-align: center;
+    }
+
+    .semantic-editor-divider {
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .semantic-color-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .semantic-color-row {
+      border: 0;
+      background: transparent;
+      color: #374151;
+      font-size: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-radius: 6px;
+      padding: 6px;
+      width: 100%;
+      text-align: left;
+    }
+
+    .semantic-color-row:hover {
+      background: #f3f4f6;
+    }
+
+    .semantic-color-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .semantic-color-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 1px solid rgba(17, 24, 39, 0.1);
+      flex: 0 0 auto;
+    }
+
+    .semantic-color-swatch.default { background: #3a3d45; }
+    .semantic-color-swatch.gray { background: #4b4f58; }
+    .semantic-color-swatch.brown { background: #7a5b46; }
+    .semantic-color-swatch.orange { background: #a46737; }
+    .semantic-color-swatch.yellow { background: #9a7a2f; }
+    .semantic-color-swatch.green { background: #2f6f56; }
+    .semantic-color-swatch.blue { background: #295f97; }
+    .semantic-color-swatch.purple { background: #6b4f9d; }
+    .semantic-color-swatch.pink { background: #8c4d7d; }
+    .semantic-color-swatch.red { background: #9b4b46; }
+
+    .semantic-color-check {
+      color: #111827;
+      font-size: 16px;
+      opacity: 0;
+    }
+
+    .semantic-color-row.is-selected .semantic-color-check {
+      opacity: 1;
+    }
+
+    .semantic-cell .notion-tag { max-width: 190px; }
+    .semantic-option-main .notion-tag { max-width: 180px; }
+    .semantic-selected-tag .notion-tag { max-width: 160px; }
+
+    .semantic-cell.has-tags .semantic-empty {
+      display: none;
+    }
+
+    .semantic-cell:not(.has-tags) .semantic-display {
+      min-height: 18px;
+    }
+
+    .semantic-cell.is-open .semantic-cell-caret {
+      color: #374151;
+    }
+
+    @media (max-width: 860px) {
+      .semantic-popover {
+        width: min(360px, calc(100vw - 16px));
+      }
+
+      .semantic-popover-body.with-editor {
+        grid-template-columns: 1fr;
+      }
+
+      .semantic-option-editor {
+        border-left: 0;
+        border-top: 1px solid #e5e7eb;
+      }
     }
 
     .batch-tools {
@@ -100,6 +675,45 @@
     .batch-status {
       font-size: 0.85rem;
       color: #1f2937;
+    }
+
+    .section-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 0.15rem 0 0.55rem;
+    }
+
+    #profiles-table thead th.sortable-header,
+    #captured-table thead th.sortable-header {
+      white-space: nowrap;
+    }
+
+    #profiles-table .sort-toggle,
+    #captured-table .sort-toggle {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+      font: inherit;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    #profiles-table .sort-arrow,
+    #captured-table .sort-arrow {
+      opacity: 0.75;
+      min-width: 0.85rem;
+      text-align: center;
+      font-size: 0.78rem;
     }
 
     .badge {
@@ -159,9 +773,109 @@
       background: #dbeafe;
       border-bottom-color: #bfdbfe;
     }
+
+    .monitor-panel {
+      height: 260px;
+      overflow: auto;
+      background: #0b1220;
+      color: #e2e8f0;
+      padding: 0.65rem;
+      border-radius: 8px;
+      margin-top: 0.4rem;
+      border: 1px solid #1f2937;
+    }
+
+    .monitor-empty {
+      color: #9ca3af;
+      font-size: 0.85rem;
+      padding: 0.35rem;
+    }
+
+    .monitor-entry {
+      display: grid;
+      grid-template-columns: auto auto minmax(80px, 1fr) minmax(140px, 3fr);
+      gap: 8px;
+      align-items: center;
+      background: #111827;
+      border: 1px solid #1f2937;
+      border-radius: 7px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .monitor-time {
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+
+    .monitor-dir {
+      font-weight: 700;
+      border-radius: 5px;
+      padding: 1px 6px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .monitor-dir.rx {
+      color: #0f766e;
+      background: #ccfbf1;
+    }
+
+    .monitor-dir.tx {
+      color: #1d4ed8;
+      background: #dbeafe;
+    }
+
+    .monitor-dir.sys {
+      color: #78350f;
+      background: #fef3c7;
+    }
+
+    .monitor-topic {
+      color: #bfdbfe;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .monitor-payload {
+      color: #e5e7eb;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .monitor-result {
+      color: #93c5fd;
+      margin-left: 0.4rem;
+      white-space: nowrap;
+    }
+
+    .monitor-rc {
+      color: #9ca3af;
+      margin-left: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .monitor-entry {
+        grid-template-columns: auto auto 1fr;
+        grid-template-areas:
+          "time dir topic"
+          "payload payload payload";
+      }
+
+      .monitor-time { grid-area: time; }
+      .monitor-dir { grid-area: dir; }
+      .monitor-topic { grid-area: topic; }
+      .monitor-payload { grid-area: payload; }
+    }
   </style>
 </head>
 <body>
+  <div id="toast-layer" class="toast-layer" aria-live="polite" aria-atomic="true"></div>
   <h1>Captured IR Codes</h1>
   <p class="hint">
     Robust mode active: captures are classified as decoded, unknown, or noise.
@@ -173,14 +887,13 @@
     Allow unknown: <strong>{{ 1 if replay_allow_unknown else 0 }}</strong>
   </p>
 
-  {% if replay_feedback and replay_feedback.message %}
-  <div class="status {{ 'ok' if replay_feedback.status == 'ok' else 'error' }}">
-    {{ replay_feedback.message }}
-    {% if replay_feedback.signature %}
-    <span class="mono">({{ replay_feedback.signature }})</span>
-    {% endif %}
-  </div>
-  {% endif %}
+  <div
+    id="replay-feedback-data"
+    data-status="{{ replay_feedback.status if replay_feedback else '' }}"
+    data-message="{{ replay_feedback.message if replay_feedback else '' }}"
+    data-signature="{{ replay_feedback.signature if replay_feedback else '' }}"
+    hidden
+  ></div>
 
   <h2 class="section-title">MQTT Live Monitor</h2>
   <p class="hint">
@@ -190,7 +903,9 @@
     <button id="monitor-pause" class="btn" type="button">Pause</button>
     <button id="monitor-clear" class="btn" type="button">Clear View</button>
   </div>
-  <pre id="mqtt-monitor" class="mono" style="height: 240px; overflow: auto; background: #0f172a; color: #e2e8f0; padding: 0.75rem; border-radius: 8px; margin-top: 0.4rem;">Connecting to monitor...</pre>
+  <div id="mqtt-monitor" class="monitor-panel" role="log" aria-live="polite" aria-label="MQTT monitor events">
+    <div class="monitor-empty">Conectando monitor...</div>
+  </div>
 
   <h2 class="section-title">Verify Custom</h2>
   <p class="hint">
@@ -225,20 +940,32 @@
 
   <div class="batch-tools">
     <label class="hint" style="margin: 0;" for="batch-repeats">Batch repeats</label>
-    <input id="batch-repeats" class="repeat-input" type="number" min="0" max="{{ replay_max_repeats }}" value="{{ replay_default_repeats }}" data-default="{{ replay_default_repeats }}">
+    <input id="batch-repeats" class="repeat-input" type="number" min="1" max="{{ replay_max_repeats }}" value="{{ replay_default_repeats if replay_default_repeats > 0 else 1 }}" data-default="{{ replay_default_repeats if replay_default_repeats > 0 else 1 }}">
+    <label class="hint" style="margin: 0;" for="time-between-commands">Time Between Commands (s)</label>
+    <input id="time-between-commands" class="repeat-input" type="number" min="1" step="0.1" value="2" data-default="2">
     <button id="verify-last" class="btn" type="button">Verify Last</button>
     <button id="verify-all" class="btn" type="button">Verify All</button>
     <span id="verify-batch-status" class="batch-status">Idle</span>
   </div>
 
-  <h2 class="section-title">Comandos reconhecidos/indexados (tabela principal)</h2>
+  <h2 class="section-title">Comandos reconhecidos indexados</h2>
   <p class="hint">
     Tabela principal de teste para perfis decoded. Verify Last e Verify All usam esta lista.
   </p>
+  <div class="section-actions">
+    <span class="hint" style="margin: 0;">Biblioteca de comandos reconhecidos (dados processados/indexados).</span>
+    <div class="inline-form" style="gap: 0.35rem;">
+      <button id="download-profiles-csv" class="btn" type="button">Download CSV</button>
+      <button id="clear-all-tables" class="btn danger" type="button">Apagar Tudo</button>
+    </div>
+  </div>
   <div class="table-container primary">
     <table id="profiles-table">
       <thead>
         <tr>
+          <th>Play</th>
+          <th>LastSeen</th>
+          <th>Função</th>
           <th>Assinatura</th>
           <th>ProtocoloHint</th>
           <th>Hexadecimal</th>
@@ -249,8 +976,6 @@
           <th>ReplayMode</th>
           <th>ReplayJSON</th>
           <th>FirstSeen</th>
-          <th>LastSeen</th>
-          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -262,7 +987,49 @@
         {% set can_replay = stable and (not is_noise) and ((not is_unknown) or replay_allow_unknown) %}
         {% if profile.Classe == 'decoded' %}
         {% set decoded_rows.count = decoded_rows.count + 1 %}
-        <tr data-signature="{{ profile.Assinatura }}" data-can-replay="{{ '1' if can_replay else '0' }}">
+        <tr data-signature="{{ profile.Assinatura }}" data-group-key="{{ profile.GroupKey|default('') }}" data-can-replay="{{ '1' if can_replay else '0' }}">
+          <td>
+            {% if can_replay %}
+            <div class="play-controls">
+              <button class="btn play-btn row-play-btn" type="button" title="Testar comando">
+                <svg class="play-ring" viewBox="0 0 32 32" aria-hidden="true">
+                  <circle class="play-ring-bg" cx="16" cy="16" r="14"></circle>
+                  <circle class="play-ring-fg" cx="16" cy="16" r="14"></circle>
+                </svg>
+                <span class="play-label">▶</span>
+              </button>
+              <input
+                class="repeat-input"
+                type="number"
+                name="repeats"
+                min="1"
+                max="{{ replay_max_repeats }}"
+                value="{{ replay_default_repeats if replay_default_repeats > 0 else 1 }}"
+                title="Quantidade de execucoes sequenciais"
+              >
+            </div>
+            <div class="play-meta">repeat</div>
+            {% elif replay_require_stable and not stable %}
+            <span class="badge">aguarde estabilidade</span>
+            {% else %}
+            <span class="badge">not ready</span>
+            {% endif %}
+          </td>
+          <td class="nowrap">{{ profile.LastSeen }}</td>
+          <td class="nowrap">
+            <button class="semantic-cell" type="button" data-role="semantic-cell" title="Editar tags">
+              <span class="semantic-display" data-role="semantic-display"></span>
+              <span class="semantic-empty">Select</span>
+              <span class="semantic-cell-caret">▼</span>
+            </button>
+            <input
+              class="semantic-input"
+              type="hidden"
+              value="{{ profile.SemanticTag|default('') }}"
+              data-signature="{{ profile.Assinatura }}"
+              data-group-key="{{ profile.GroupKey|default('') }}"
+            >
+          </td>
           <td class="mono">{{ profile.Assinatura }}</td>
           <td>{{ profile.ProtocoloHint }}</td>
           <td class="mono">{{ profile.Hexadecimal }}</td>
@@ -273,49 +1040,32 @@
           <td class="nowrap">{{ profile.ReplayMode }}</td>
           <td class="mono">{{ profile.ReplayJSON }}</td>
           <td class="nowrap">{{ profile.FirstSeen }}</td>
-          <td class="nowrap">{{ profile.LastSeen }}</td>
-          <td>
-            {% if can_replay %}
-            <form method="post" action="/replay" class="inline-form">
-              <input type="hidden" name="signature" value="{{ profile.Assinatura }}">
-              <input
-                class="repeat-input"
-                type="number"
-                name="repeats"
-                min="0"
-                max="{{ replay_max_repeats }}"
-                value="{{ replay_default_repeats }}"
-                title="Repeats"
-              >
-              <button class="btn" type="submit">Testar</button>
-            </form>
-            {% elif replay_require_stable and not stable %}
-            <span class="badge">aguarde estabilidade</span>
-            {% else %}
-            <span class="badge">not ready</span>
-            {% endif %}
-          </td>
         </tr>
         {% endif %}
         {% endfor %}
         {% if decoded_rows.count == 0 %}
         <tr>
-          <td colspan="12">No decoded profiles yet.</td>
+          <td colspan="13">No decoded profiles yet.</td>
         </tr>
         {% endif %}
       </tbody>
     </table>
   </div>
 
-  <h2 class="section-title">Ultimos comandos capturados (referencia)</h2>
+  <h2 class="section-title">Logs</h2>
+  <div class="section-actions">
+    <span class="hint" style="margin: 0;">Log bruto de captura, sem agrupamento, para analise completa.</span>
+    <button id="download-logs-csv" class="btn" type="button">Download CSV</button>
+  </div>
   <div class="table-container secondary">
-    <table>
+    <table id="captured-table">
       <thead>
         <tr>
-          <th>ID</th>
           <th>Timestamp</th>
+          <th>ID</th>
           <th>Fonte</th>
           <th>Protocolo</th>
+          <th>Tag Semantica</th>
           <th>Hexadecimal</th>
           <th>Tamanho</th>
           <th>Classe</th>
@@ -326,11 +1076,18 @@
       <tbody>
         {% for row in rows %}
         <tr>
+          <td class="nowrap" data-sort-value="{{ row.Timestamp }}">
+            {{ row.Timestamp }}
+          </td>
           <td class="nowrap">{{ row.ID }}</td>
-          <td class="nowrap">{{ row.Timestamp }}</td>
           <td class="mono">{{ row.Fonte }}</td>
           <td>{{ row.Protocolo }}</td>
-          <td class="mono">{{ row.Hexadecimal }}</td>
+          <td class="nowrap">
+            {{ row.SemanticTag|default('unknown') }}
+          </td>
+          <td class="mono">
+            {{ row.Hexadecimal }}
+          </td>
           <td class="nowrap">{{ row.Tamanho }}</td>
           <td class="nowrap">{{ row.Classe }}</td>
           <td class="mono">{{ row.Assinatura }}</td>
@@ -338,11 +1095,32 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="9">No IR data yet.</td>
+          <td colspan="10">No IR data yet.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+  </div>
+
+  <div id="semantic-popover" class="semantic-popover hidden" role="dialog" aria-label="Semantic tags">
+    <div class="semantic-popover-head">
+      <div id="semantic-selected-list" class="semantic-selected-list"></div>
+      <input id="semantic-filter-input" class="semantic-filter-input" type="text" placeholder="Select an option or create one">
+    </div>
+    <div id="semantic-popover-body" class="semantic-popover-body">
+      <div>
+        <p class="semantic-popover-caption">Select an option or create one</p>
+        <div id="semantic-options-list" class="semantic-options-list"></div>
+      </div>
+      <aside id="semantic-option-editor" class="semantic-option-editor hidden" aria-label="Edit option">
+        <p class="semantic-editor-title">Edit option</p>
+        <input id="semantic-editor-name" class="semantic-editor-name" type="text" placeholder="Tag name">
+        <button id="semantic-editor-delete" class="semantic-editor-delete" type="button"><span class="icon">x</span><span>Delete</span></button>
+        <div class="semantic-editor-divider"></div>
+        <p class="semantic-editor-color-label">Colors</p>
+        <div id="semantic-color-list" class="semantic-color-list"></div>
+      </aside>
+    </div>
   </div>
 
   <script>
@@ -350,6 +1128,8 @@
       const monitor = document.getElementById('mqtt-monitor');
       const pauseBtn = document.getElementById('monitor-pause');
       const clearBtn = document.getElementById('monitor-clear');
+      const toastLayer = document.getElementById('toast-layer');
+      const replayFeedbackData = document.getElementById('replay-feedback-data');
       let afterId = 0;
       let paused = false;
       let batchRunning = false;
@@ -357,11 +1137,41 @@
 
       const verifyLastBtn = document.getElementById('verify-last');
       const verifyAllBtn = document.getElementById('verify-all');
+      const downloadProfilesCsvBtn = document.getElementById('download-profiles-csv');
+      const downloadLogsCsvBtn = document.getElementById('download-logs-csv');
+      const clearAllTablesBtn = document.getElementById('clear-all-tables');
       const batchRepeatsInput = document.getElementById('batch-repeats');
+      const timeBetweenCommandsInput = document.getElementById('time-between-commands');
       const batchStatus = document.getElementById('verify-batch-status');
       const defaultBatchRepeats = Number.parseInt(batchRepeatsInput.getAttribute('data-default') || '0', 10);
+      const defaultBetweenSeconds = Number.parseFloat(timeBetweenCommandsInput.getAttribute('data-default') || '2');
       const manualForm = document.getElementById('manual-replay-form');
+      const semanticPopover = document.getElementById('semantic-popover');
+      const semanticPopoverBody = document.getElementById('semantic-popover-body');
+      const semanticSelectedList = document.getElementById('semantic-selected-list');
+      const semanticFilterInput = document.getElementById('semantic-filter-input');
+      const semanticOptionsList = document.getElementById('semantic-options-list');
+      const semanticOptionEditor = document.getElementById('semantic-option-editor');
+      const semanticEditorName = document.getElementById('semantic-editor-name');
+      const semanticEditorDelete = document.getElementById('semantic-editor-delete');
+      const semanticColorList = document.getElementById('semantic-color-list');
       const manualStorageKey = 'ir_sniffer_manual_replay_last_v1';
+      const minEstimatedSendMs = 120;
+      const maxEstimatedSendMs = 5000;
+      let movingAverageSendMs = 260;
+      const rowProgressState = new WeakMap();
+      const semanticTagSet = new Set();
+      let activeSemanticInput = null;
+      let activeOptionTag = '';
+      let monitorEntryCount = 0;
+      const notionTagPalette = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
+      const semanticCatalogKey = 'ir_sniffer_semantic_tag_catalog_v1';
+      const semanticCatalog = {};
+      const semanticCommitByInput = new WeakMap();
+
+      function clamp(value, minValue, maxValue) {
+        return Math.min(maxValue, Math.max(minValue, value));
+      }
 
       function saveManualState() {
         if (!manualForm) {
@@ -444,19 +1254,234 @@
 
       restoreManualState();
 
+      function closeToast(toast) {
+        if (!toast || !toast.parentElement) {
+          return;
+        }
+        toast.parentElement.removeChild(toast);
+      }
+
+      function showToast(type, text) {
+        if (!toastLayer || !text) {
+          return;
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type === 'ok' ? 'ok' : 'error'}`;
+
+        const icon = document.createElement('span');
+        icon.className = 'toast-icon';
+        icon.textContent = type === 'ok' ? 'OK' : '!';
+
+        const message = document.createElement('div');
+        message.className = 'toast-text';
+        message.textContent = text;
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'toast-close';
+        close.textContent = 'x';
+        close.addEventListener('click', function () {
+          closeToast(toast);
+        });
+
+        toast.appendChild(icon);
+        toast.appendChild(message);
+        toast.appendChild(close);
+        toastLayer.appendChild(toast);
+
+        while (toastLayer.children.length > 4) {
+          toastLayer.removeChild(toastLayer.firstElementChild);
+        }
+
+        setTimeout(function () {
+          closeToast(toast);
+        }, 4800);
+      }
+
+      const replayQueryParamKeys = [
+        'replay_status',
+        'replay_message',
+        'replay_signature',
+        'manual_protocol',
+        'manual_bits',
+        'manual_hex',
+        'manual_repeats'
+      ];
+
+      function cleanReplayQueryParams() {
+        try {
+          const cleanUrl = new URL(window.location.href);
+          let changed = false;
+          replayQueryParamKeys.forEach(function (key) {
+            if (cleanUrl.searchParams.has(key)) {
+              cleanUrl.searchParams.delete(key);
+              changed = true;
+            }
+          });
+
+          if (changed) {
+            window.history.replaceState(null, '', cleanUrl.toString());
+          }
+        } catch (_error) {
+          // Ignore URL cleanup issues and keep page functional.
+        }
+      }
+
+      cleanReplayQueryParams();
+
+      if (replayFeedbackData) {
+        const replayMessage = (replayFeedbackData.dataset.message || '').trim();
+        const replaySignature = (replayFeedbackData.dataset.signature || '').trim();
+        const replayStatus = (replayFeedbackData.dataset.status || '').trim().toLowerCase();
+        if (replayMessage) {
+          const suffix = replaySignature ? ` (${replaySignature})` : '';
+          showToast(replayStatus === 'ok' ? 'ok' : 'error', `${replayMessage}${suffix}`);
+        }
+      }
+
       if (manualForm) {
         manualForm.addEventListener('input', saveManualState);
         manualForm.addEventListener('change', saveManualState);
-        manualForm.addEventListener('submit', saveManualState);
+        manualForm.addEventListener('submit', async function (event) {
+          event.preventDefault();
+          saveManualState();
+
+          const submitButton = manualForm.querySelector('button[type="submit"]');
+          if (submitButton) {
+            submitButton.disabled = true;
+          }
+
+          try {
+            const formData = new FormData(manualForm);
+            const response = await fetch('/replay/manual', {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'Accept': 'application/json'
+              }
+            });
+
+            let payload = {};
+            try {
+              payload = await response.json();
+            } catch (_error) {
+              payload = {};
+            }
+
+            if (!response.ok || payload.ok === false) {
+              throw new Error(payload.message || `HTTP ${response.status}`);
+            }
+
+            const sig = payload.signature ? ` (${payload.signature})` : '';
+            showToast('ok', `${payload.message || 'Manual replay enviado'}${sig}`);
+            setBatchUi(batchRunning, `Manual replay OK${sig}`);
+            cleanReplayQueryParams();
+          } catch (error) {
+            const msg = error && error.message ? error.message : String(error);
+            showToast('error', `Falha manual replay: ${msg}`);
+            setBatchUi(batchRunning, `Falha manual replay: ${msg}`);
+          } finally {
+            if (submitButton) {
+              submitButton.disabled = false;
+            }
+          }
+        });
       }
 
       function appendLine(line) {
-        const atBottom = monitor.scrollTop + monitor.clientHeight >= monitor.scrollHeight - 8;
-        monitor.textContent += line + '\n';
+        appendMonitorEvent({
+          timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
+          direction: 'SYS',
+          topic: 'monitor',
+          payload: line,
+          rc: ''
+        });
+      }
 
-        const lines = monitor.textContent.split('\n');
-        if (lines.length > 450) {
-          monitor.textContent = lines.slice(lines.length - 450).join('\n');
+      function createMonitorEntry(event, resultHex = '') {
+        const row = document.createElement('div');
+        row.className = 'monitor-entry';
+
+        const ts = document.createElement('span');
+        ts.className = 'monitor-time';
+        ts.textContent = String(event.timestamp || '-').replace('T', ' ');
+
+        const direction = String(event.direction || 'SYS').toUpperCase();
+        const dir = document.createElement('span');
+        dir.className = `monitor-dir ${direction === 'RX' ? 'rx' : direction === 'TX' ? 'tx' : 'sys'}`;
+        dir.textContent = direction;
+
+        const topic = document.createElement('span');
+        topic.className = 'monitor-topic';
+        topic.textContent = String(event.topic || '-');
+
+        const payload = document.createElement('span');
+        payload.className = 'monitor-payload';
+        const payloadText = String(event.payload || '').replace(/\s+/g, ' ').trim();
+        payload.textContent = payloadText;
+        payload.title = payloadText;
+
+        if (resultHex) {
+          const result = document.createElement('span');
+          result.className = 'monitor-result';
+          result.textContent = `=> ${resultHex}`;
+          result.title = resultHex;
+          payload.appendChild(result);
+        }
+
+        if (event.rc !== undefined && event.rc !== null && String(event.rc) !== '') {
+          const rc = document.createElement('span');
+          rc.className = 'monitor-rc';
+          rc.textContent = `rc=${event.rc}`;
+          topic.appendChild(rc);
+        }
+
+        row.appendChild(ts);
+        row.appendChild(dir);
+        row.appendChild(topic);
+        row.appendChild(payload);
+        return row;
+      }
+
+      function extractResultHexFromPayload(payload) {
+        const text = String(payload || '').trim();
+        if (!text.startsWith('{')) {
+          return '';
+        }
+
+        try {
+          const data = JSON.parse(text);
+          const ir = data && data.IrReceived;
+          if (!ir || typeof ir !== 'object') {
+            return '';
+          }
+
+          const hexValue = String(ir.Data || '').trim();
+          return hexValue;
+        } catch (_error) {
+          return '';
+        }
+      }
+
+      function appendMonitorEvent(event) {
+        const topic = String(event && event.topic ? event.topic : '').toLowerCase();
+        if (!topic.endsWith('/get')) {
+          return;
+        }
+
+        const atBottom = monitor.scrollTop + monitor.clientHeight >= monitor.scrollHeight - 8;
+        const empty = monitor.querySelector('.monitor-empty');
+        if (empty) {
+          empty.remove();
+        }
+
+        monitor.appendChild(createMonitorEntry(event));
+        monitorEntryCount += 1;
+
+        while (monitorEntryCount > 260 && monitor.firstElementChild) {
+          monitor.removeChild(monitor.firstElementChild);
+          monitorEntryCount -= 1;
         }
 
         if (atBottom) {
@@ -474,22 +1499,26 @@
           const data = await response.json();
           const events = Array.isArray(data.events) ? data.events : [];
 
-          if (afterId === 0 && events.length > 0 && monitor.textContent.startsWith('Connecting')) {
-            monitor.textContent = '';
-          }
-
-          for (const event of events) {
+          for (let index = 0; index < events.length; index += 1) {
+            const event = events[index];
             const id = Number(event.id || 0);
             if (id > afterId) {
               afterId = id;
             }
 
-            const ts = event.timestamp || '-';
-            const dir = String(event.direction || '-').toUpperCase().padEnd(2, ' ');
-            const topic = event.topic || '-';
-            const payload = event.payload || '';
-            const rc = event.rc;
-            appendLine(`[${ts}] ${dir} ${topic} | rc=${rc} | ${payload}`);
+            const topic = String(event && event.topic ? event.topic : '').toLowerCase();
+            if (!topic.endsWith('/get')) {
+              continue;
+            }
+
+            const nextEvent = events[index + 1];
+            const nextTopic = String(nextEvent && nextEvent.topic ? nextEvent.topic : '').toLowerCase();
+            const sameSecond = nextEvent && String(nextEvent.timestamp || '') === String(event.timestamp || '');
+            const resultHex = nextEvent && nextTopic.endsWith('/result') && sameSecond
+              ? extractResultHexFromPayload(nextEvent.payload)
+              : '';
+
+            appendMonitorEvent(event, resultHex);
           }
         } catch (_error) {
           appendLine('[monitor] temporary fetch error');
@@ -502,7 +1531,8 @@
       });
 
       clearBtn.addEventListener('click', function () {
-        monitor.textContent = '';
+        monitor.innerHTML = '<div class="monitor-empty">Monitor limpo.</div>';
+        monitorEntryCount = 0;
       });
 
       function setBatchUi(isRunning, text) {
@@ -510,6 +1540,117 @@
         verifyAllBtn.textContent = isRunning ? 'Pause' : 'Verify All';
         verifyAllBtn.classList.toggle('running', isRunning);
         batchStatus.textContent = text;
+      }
+
+      function csvEscape(value) {
+        const text = String(value == null ? '' : value);
+        if (/[",\n]/.test(text)) {
+          return `"${text.replaceAll('"', '""')}"`;
+        }
+        return text;
+      }
+
+      function extractHeaderText(th) {
+        const label = th.getAttribute('data-column-label');
+        if (label) {
+          return String(label).trim();
+        }
+
+        const toggle = th.querySelector('.sort-toggle');
+        if (toggle && toggle.firstElementChild) {
+          return String(toggle.firstElementChild.textContent || '').trim();
+        }
+
+        return String(th.textContent || '').trim();
+      }
+
+      function extractCellText(cell) {
+        return String(cell ? cell.innerText || cell.textContent || '' : '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function downloadTableAsCsv(tableId, filename) {
+        const table = document.getElementById(tableId);
+        if (!table) {
+          setBatchUi(batchRunning, `Tabela ${tableId} nao encontrada`);
+          return;
+        }
+
+        const headers = Array.from(table.querySelectorAll('thead th')).map(extractHeaderText);
+        const rows = Array.from(table.querySelectorAll('tbody tr')).filter(function (row) {
+          return row.offsetParent !== null;
+        });
+
+        const lines = [];
+        lines.push(headers.map(csvEscape).join(','));
+
+        rows.forEach(function (row) {
+          const cols = Array.from(row.children).slice(0, headers.length);
+          const values = cols.map(function (cell) {
+            return csvEscape(extractCellText(cell));
+          });
+          lines.push(values.join(','));
+        });
+
+        const csvContent = lines.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        setBatchUi(batchRunning, `CSV baixado: ${filename}`);
+      }
+
+      async function clearAllTables() {
+        const confirmed = window.confirm('Apagar TODOS os dados das duas tabelas? Esta acao nao pode ser desfeita.');
+        if (!confirmed) {
+          return;
+        }
+
+        if (clearAllTablesBtn) {
+          clearAllTablesBtn.disabled = true;
+        }
+
+        setBatchUi(batchRunning, 'Limpando tabelas...');
+        try {
+          const response = await fetch('/tables/clear', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          let payload = {};
+          try {
+            payload = await response.json();
+          } catch (_error) {
+            payload = {};
+          }
+
+          if (!response.ok || payload.ok === false) {
+            throw new Error(payload.message || `HTTP ${response.status}`);
+          }
+
+          setBatchUi(
+            batchRunning,
+            `Tabelas limpas (${payload.cleared_profiles || 0} perfis, ${payload.cleared_logs || 0} logs)`
+          );
+
+          window.location.reload();
+        } catch (error) {
+          setBatchUi(batchRunning, `Falha ao limpar tabelas: ${error && error.message ? error.message : error}`);
+        } finally {
+          if (clearAllTablesBtn) {
+            clearAllTablesBtn.disabled = false;
+          }
+        }
       }
 
       function getReplayableRows() {
@@ -521,11 +1662,111 @@
         const batchRepeats = Number.parseInt(batchRepeatsInput.value, 10);
         if (rowInput) {
           const rowValue = Number.parseInt(rowInput.value, 10);
-          if (Number.isFinite(rowValue)) {
+          if (Number.isFinite(rowValue) && rowValue >= 1) {
             return rowValue;
           }
+
+          rowInput.value = '1';
+          return 1;
         }
-        return Number.isFinite(batchRepeats) ? batchRepeats : defaultBatchRepeats;
+        if (Number.isFinite(batchRepeats) && batchRepeats >= 1) {
+          return batchRepeats;
+        }
+
+        return Number.isFinite(defaultBatchRepeats) && defaultBatchRepeats >= 1 ? defaultBatchRepeats : 1;
+      }
+
+      function getBetweenCommandsMs() {
+        const seconds = Number.parseFloat(timeBetweenCommandsInput.value);
+        const normalizedSeconds = Number.isFinite(seconds) && seconds >= 1 ? seconds : defaultBetweenSeconds;
+
+        if (!Number.isFinite(seconds) || seconds < 1) {
+          timeBetweenCommandsInput.value = String(normalizedSeconds);
+        }
+
+        return Math.max(1000, Math.round(normalizedSeconds * 1000));
+      }
+
+      function getRowMetaElement(row) {
+        return row.querySelector('.play-meta');
+      }
+
+      function renderRowProgress(row, progress, metaText) {
+        const button = row.querySelector('.row-play-btn');
+        if (!button) {
+          return;
+        }
+
+        const boundedProgress = clamp(progress, 0, 1);
+        const ring = button.querySelector('.play-ring-fg');
+        if (ring) {
+          const circumference = 87.9646;
+          ring.style.strokeDashoffset = String(Math.max(0, circumference * (1 - boundedProgress)));
+        }
+
+        if (typeof metaText === 'string') {
+          const metaElement = getRowMetaElement(row);
+          if (metaElement) {
+            metaElement.textContent = metaText;
+          }
+        }
+      }
+
+      function stopRowProgressLoop(row) {
+        const state = rowProgressState.get(row);
+        if (state && state.timerId) {
+          clearInterval(state.timerId);
+        }
+        rowProgressState.delete(row);
+      }
+
+      function startRowProgressLoop(row, state) {
+        stopRowProgressLoop(row);
+
+        function tick() {
+          if (!state.running) {
+            return;
+          }
+
+          const now = performance.now();
+          const elapsed = now - state.startedAt;
+          const expectedTotal = Math.max(1, state.expectedTotalMs);
+          const progress = Math.min(0.985, elapsed / expectedTotal);
+          renderRowProgress(row, progress, state.metaText);
+        }
+
+        tick();
+        state.timerId = setInterval(tick, 90);
+        rowProgressState.set(row, state);
+      }
+
+      function updateRowProgressState(row, updater) {
+        const state = rowProgressState.get(row);
+        if (!state) {
+          return;
+        }
+
+        updater(state);
+
+        const elapsed = performance.now() - state.startedAt;
+        const expectedTotal = Math.max(1, state.expectedTotalMs);
+        const progress = Math.min(0.985, elapsed / expectedTotal);
+        renderRowProgress(row, progress, state.metaText);
+      }
+
+      function setRowRunning(row, isRunning) {
+        const button = row.querySelector('.row-play-btn');
+        if (!button) {
+          return;
+        }
+
+        button.classList.toggle('loading', isRunning);
+        button.disabled = isRunning;
+
+        if (!isRunning) {
+          stopRowProgressLoop(row);
+          renderRowProgress(row, 0, 'repeat');
+        }
       }
 
       async function replaySignature(signature, repeats) {
@@ -552,23 +1793,593 @@
         return payload;
       }
 
-      async function verifyRow(row) {
+      async function saveSemanticTag(signature, semanticTag) {
+        const response = await fetch('/profiles/semantic-tag', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ signature, semantic_tag: semanticTag })
+        });
+
+        let payload = {};
+        try {
+          payload = await response.json();
+        } catch (_error) {
+          payload = {};
+        }
+
+        if (!response.ok || payload.ok === false) {
+          throw new Error(payload.message || `HTTP ${response.status}`);
+        }
+
+        return payload;
+      }
+
+      function normalizeSemanticTag(text) {
+        return String(text || '').trim().slice(0, 80);
+      }
+
+      function parseSemanticTags(raw) {
+        const source = String(raw || '');
+        const parts = source.split(',').map(function (item) {
+          return normalizeSemanticTag(item);
+        }).filter(Boolean);
+
+        const unique = [];
+        parts.forEach(function (tag) {
+          if (!unique.includes(tag)) {
+            unique.push(tag);
+          }
+        });
+        return unique;
+      }
+
+      function serializeSemanticTags(tags) {
+        return tags.join(', ');
+      }
+
+      function saveSemanticCatalog() {
+        try {
+          localStorage.setItem(semanticCatalogKey, JSON.stringify(semanticCatalog));
+        } catch (_error) {
+          // ignore localStorage failures
+        }
+      }
+
+      function loadSemanticCatalog() {
+        let parsed = null;
+        try {
+          parsed = JSON.parse(localStorage.getItem(semanticCatalogKey) || 'null');
+        } catch (_error) {
+          parsed = null;
+        }
+        if (!parsed || typeof parsed !== 'object') {
+          return;
+        }
+
+        Object.entries(parsed).forEach(function (entry) {
+          const name = normalizeSemanticTag(entry[0]);
+          const value = entry[1];
+          if (!name || !value || typeof value !== 'object') {
+            return;
+          }
+          const color = notionTagPalette.includes(String(value.color || '')) ? String(value.color) : notionTagColor(name);
+          semanticCatalog[name] = { color };
+        });
+      }
+
+      function notionTagColor(tag) {
+        if (semanticCatalog[tag] && notionTagPalette.includes(semanticCatalog[tag].color)) {
+          return semanticCatalog[tag].color;
+        }
+
+        const text = String(tag || '');
+        let hash = 0;
+        for (let i = 0; i < text.length; i += 1) {
+          hash = ((hash << 5) - hash) + text.charCodeAt(i);
+          hash |= 0;
+        }
+        const index = Math.abs(hash) % notionTagPalette.length;
+        return notionTagPalette[index];
+      }
+
+      function ensureCatalogTag(tag) {
+        const normalized = normalizeSemanticTag(tag);
+        if (!normalized) {
+          return;
+        }
+        if (!semanticCatalog[normalized]) {
+          semanticCatalog[normalized] = { color: notionTagColor(normalized) };
+          saveSemanticCatalog();
+        }
+      }
+
+      function getAllSemanticInputs() {
+        return Array.from(document.querySelectorAll('#profiles-table .semantic-input'));
+      }
+
+      function getSemanticCell(input) {
+        return input && input.parentElement ? input.parentElement.querySelector('[data-role="semantic-cell"]') : null;
+      }
+
+      function setSemanticInputValue(input, tags) {
+        input.value = serializeSemanticTags(tags);
+      }
+
+      function collectSemanticCatalogFromValue(text) {
+        parseSemanticTags(text).forEach(function (tag) {
+          ensureCatalogTag(tag);
+          semanticTagSet.add(tag);
+        });
+      }
+
+      function renderSemanticDisplay(input) {
+        const cell = getSemanticCell(input);
+        const display = cell ? cell.querySelector('[data-role="semantic-display"]') : null;
+        if (!cell || !display) {
+          return;
+        }
+
+        const tags = parseSemanticTags(input.value || '');
+        display.textContent = '';
+        tags.forEach(function (tag) {
+          ensureCatalogTag(tag);
+          const chip = document.createElement('span');
+          chip.className = `notion-tag notion-tag--${notionTagColor(tag)}`;
+          chip.textContent = tag;
+          display.appendChild(chip);
+        });
+
+        cell.classList.toggle('has-tags', tags.length > 0);
+      }
+
+      function refreshAllSemanticDisplays() {
+        getAllSemanticInputs().forEach(function (input) {
+          renderSemanticDisplay(input);
+        });
+      }
+
+      async function commitSemanticInput(input) {
+        if (!input) {
+          return;
+        }
+        const commitFn = semanticCommitByInput.get(input);
+        if (typeof commitFn === 'function') {
+          await commitFn();
+        }
+      }
+
+      async function commitAllRowsUsingTag(tag) {
+        const all = getAllSemanticInputs();
+        const toCommit = all.filter(function (input) {
+          return parseSemanticTags(input.value || '').includes(tag);
+        });
+        for (const input of toCommit) {
+          await commitSemanticInput(input);
+        }
+      }
+
+      async function removeTagEverywhere(tag) {
+        const all = getAllSemanticInputs();
+        for (const input of all) {
+          const next = parseSemanticTags(input.value || '').filter(function (item) {
+            return item !== tag;
+          });
+          if (serializeSemanticTags(next) !== serializeSemanticTags(parseSemanticTags(input.value || ''))) {
+            setSemanticInputValue(input, next);
+            renderSemanticDisplay(input);
+            await commitSemanticInput(input);
+          }
+        }
+      }
+
+      async function renameTagEverywhere(oldTag, newTag) {
+        const all = getAllSemanticInputs();
+        for (const input of all) {
+          const current = parseSemanticTags(input.value || '');
+          if (!current.includes(oldTag)) {
+            continue;
+          }
+          const next = [];
+          current.forEach(function (item) {
+            next.push(item === oldTag ? newTag : item);
+          });
+          setSemanticInputValue(input, parseSemanticTags(serializeSemanticTags(next)));
+          renderSemanticDisplay(input);
+          await commitSemanticInput(input);
+        }
+      }
+
+      function closeOptionEditor() {
+        activeOptionTag = '';
+        if (semanticOptionEditor) {
+          semanticOptionEditor.classList.add('hidden');
+        }
+        if (semanticPopoverBody) {
+          semanticPopoverBody.classList.remove('with-editor');
+        }
+      }
+
+      function renderColorEditor(tag) {
+        if (!semanticColorList) {
+          return;
+        }
+
+        semanticColorList.textContent = '';
+        const colors = ['default'].concat(notionTagPalette);
+        const currentColor = notionTagColor(tag);
+
+        colors.forEach(function (colorName) {
+          const row = document.createElement('button');
+          row.type = 'button';
+          row.className = 'semantic-color-row';
+          if (colorName === currentColor || (colorName === 'default' && !semanticCatalog[tag])) {
+            row.classList.add('is-selected');
+          }
+
+          const left = document.createElement('span');
+          left.className = 'semantic-color-left';
+
+          const swatch = document.createElement('span');
+          swatch.className = `semantic-color-swatch ${colorName}`;
+          const label = document.createElement('span');
+          label.textContent = colorName === 'default'
+            ? 'Default'
+            : colorName.charAt(0).toUpperCase() + colorName.slice(1);
+
+          const check = document.createElement('span');
+          check.className = 'semantic-color-check';
+          check.textContent = '✓';
+
+          left.appendChild(swatch);
+          left.appendChild(label);
+          row.appendChild(left);
+          row.appendChild(check);
+
+          row.addEventListener('click', function () {
+            if (colorName === 'default') {
+              delete semanticCatalog[tag];
+            } else {
+              semanticCatalog[tag] = { color: colorName };
+            }
+            saveSemanticCatalog();
+            refreshAllSemanticDisplays();
+            renderSemanticPopover(activeSemanticInput, semanticFilterInput.value || '');
+          });
+
+          semanticColorList.appendChild(row);
+        });
+      }
+
+      function openOptionEditor(tag) {
+        if (!semanticOptionEditor || !semanticEditorName) {
+          return;
+        }
+
+        activeOptionTag = tag;
+        semanticOptionEditor.classList.remove('hidden');
+        if (semanticPopoverBody) {
+          semanticPopoverBody.classList.add('with-editor');
+        }
+        semanticEditorName.value = tag;
+        renderColorEditor(tag);
+
+        semanticOptionsList.querySelectorAll('.semantic-option-row').forEach(function (row) {
+          row.classList.toggle('is-focused', row.getAttribute('data-tag-name') === tag);
+        });
+      }
+
+      async function commitEditedOptionName() {
+        const oldTag = activeOptionTag;
+        const nextTag = normalizeSemanticTag(semanticEditorName ? semanticEditorName.value : '');
+        if (!oldTag || !nextTag || nextTag === oldTag) {
+          if (semanticEditorName && oldTag) {
+            semanticEditorName.value = oldTag;
+          }
+          return;
+        }
+
+        const previousColor = semanticCatalog[oldTag] ? semanticCatalog[oldTag].color : null;
+        delete semanticCatalog[oldTag];
+        semanticTagSet.delete(oldTag);
+        semanticTagSet.add(nextTag);
+        if (previousColor) {
+          semanticCatalog[nextTag] = { color: previousColor };
+        } else {
+          ensureCatalogTag(nextTag);
+        }
+        saveSemanticCatalog();
+
+        await renameTagEverywhere(oldTag, nextTag);
+        activeOptionTag = nextTag;
+        renderSemanticPopover(activeSemanticInput, semanticFilterInput.value || '');
+        if (semanticEditorName) {
+          semanticEditorName.value = nextTag;
+        }
+      }
+
+      function renderSemanticPopover(currentInput, filterText = '') {
+        if (!semanticPopover || !semanticSelectedList || !semanticOptionsList || !currentInput) {
+          return;
+        }
+
+        const selectedTags = parseSemanticTags(currentInput.value || '');
+        semanticSelectedList.textContent = '';
+        selectedTags.forEach(function (tag) {
+          const wrapper = document.createElement('span');
+          wrapper.className = 'semantic-selected-tag';
+
+          const chip = document.createElement('span');
+          chip.className = `notion-tag notion-tag--${notionTagColor(tag)}`;
+          chip.textContent = tag;
+
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'semantic-remove-tag';
+          removeBtn.textContent = '×';
+          removeBtn.title = 'Remove';
+          removeBtn.addEventListener('click', async function () {
+            const next = selectedTags.filter(function (item) {
+              return item !== tag;
+            });
+            setSemanticInputValue(currentInput, next);
+            renderSemanticDisplay(currentInput);
+            await commitSemanticInput(currentInput);
+            renderSemanticPopover(currentInput, semanticFilterInput.value || '');
+          });
+
+          wrapper.appendChild(chip);
+          wrapper.appendChild(removeBtn);
+          semanticSelectedList.appendChild(wrapper);
+        });
+
+        const normalizedFilter = normalizeSemanticTag(filterText).toLowerCase();
+        const visibleTags = Array.from(semanticTagSet.values()).filter(function (tag) {
+          if (!normalizedFilter) {
+            return true;
+          }
+          return tag.toLowerCase().includes(normalizedFilter);
+        }).sort(function (a, b) {
+          return a.localeCompare(b);
+        });
+
+        semanticOptionsList.textContent = '';
+        visibleTags.forEach(function (tag) {
+          const row = document.createElement('div');
+          row.className = 'semantic-option-row';
+          row.setAttribute('data-tag-name', tag);
+
+          const handle = document.createElement('span');
+          handle.className = 'semantic-option-handle';
+          handle.textContent = '⋮⋮';
+
+          const mainBtn = document.createElement('button');
+          mainBtn.type = 'button';
+          mainBtn.className = 'semantic-option-main';
+          if (selectedTags.includes(tag)) {
+            mainBtn.classList.add('is-selected');
+          }
+
+          const chip = document.createElement('span');
+          chip.className = `notion-tag notion-tag--${notionTagColor(tag)}`;
+          chip.textContent = tag;
+          mainBtn.appendChild(chip);
+
+          mainBtn.addEventListener('click', async function () {
+            const current = parseSemanticTags(currentInput.value || '');
+            const next = current.includes(tag)
+              ? current.filter(function (item) { return item !== tag; })
+              : current.concat([tag]);
+            setSemanticInputValue(currentInput, next);
+            renderSemanticDisplay(currentInput);
+            await commitSemanticInput(currentInput);
+            renderSemanticPopover(currentInput, semanticFilterInput.value || '');
+          });
+
+          const moreBtn = document.createElement('button');
+          moreBtn.type = 'button';
+          moreBtn.className = 'semantic-option-more';
+          moreBtn.textContent = '⋯';
+          moreBtn.title = 'Edit option';
+          moreBtn.addEventListener('click', function () {
+            openOptionEditor(tag);
+          });
+
+          row.appendChild(handle);
+          row.appendChild(mainBtn);
+          row.appendChild(moreBtn);
+          semanticOptionsList.appendChild(row);
+        });
+
+        const createTag = normalizeSemanticTag(filterText);
+        const canCreate = createTag && !Array.from(semanticTagSet.values()).some(function (tag) {
+          return tag.toLowerCase() === createTag.toLowerCase();
+        });
+
+        if (canCreate) {
+          const row = document.createElement('div');
+          row.className = 'semantic-option-row';
+
+          const spacer = document.createElement('span');
+          spacer.className = 'semantic-option-handle';
+          spacer.textContent = '+';
+
+          const createBtn = document.createElement('button');
+          createBtn.type = 'button';
+          createBtn.className = 'semantic-option-main create';
+
+          const createText = document.createElement('span');
+          createText.className = 'semantic-option-create';
+          createText.appendChild(document.createTextNode('Create '));
+          const strongTag = document.createElement('strong');
+          strongTag.textContent = createTag;
+          createText.appendChild(strongTag);
+          createBtn.appendChild(createText);
+
+          createBtn.addEventListener('click', async function () {
+            semanticTagSet.add(createTag);
+            ensureCatalogTag(createTag);
+            const next = parseSemanticTags(currentInput.value || '');
+            if (!next.includes(createTag)) {
+              next.push(createTag);
+            }
+            setSemanticInputValue(currentInput, next);
+            renderSemanticDisplay(currentInput);
+            await commitSemanticInput(currentInput);
+            semanticFilterInput.value = '';
+            renderSemanticPopover(currentInput, '');
+          });
+
+          row.appendChild(spacer);
+          row.appendChild(createBtn);
+          semanticOptionsList.appendChild(row);
+        }
+      }
+
+      function openSemanticPopover(input) {
+        if (!semanticPopover || !input) {
+          return;
+        }
+
+        activeSemanticInput = input;
+        const cell = getSemanticCell(input);
+        const rect = (cell || input).getBoundingClientRect();
+        semanticPopover.classList.remove('hidden');
+
+        const measuredWidth = semanticPopover.getBoundingClientRect().width || 560;
+        const left = Math.max(10, Math.min(rect.left, window.innerWidth - measuredWidth - 10));
+        let top = rect.bottom + 6;
+
+        semanticPopover.style.left = `${left}px`;
+        semanticPopover.style.top = `${top}px`;
+        semanticFilterInput.value = '';
+        renderSemanticPopover(input, '');
+        closeOptionEditor();
+
+        const measuredHeight = semanticPopover.getBoundingClientRect().height || 320;
+        const maxTop = window.innerHeight - measuredHeight - 10;
+        if (top > maxTop) {
+          top = Math.max(10, rect.top - measuredHeight - 6);
+          semanticPopover.style.top = `${top}px`;
+        }
+
+        getAllSemanticInputs().forEach(function (rowInput) {
+          const cellButton = getSemanticCell(rowInput);
+          if (cellButton) {
+            cellButton.classList.toggle('is-open', rowInput === input);
+          }
+        });
+
+        semanticFilterInput.focus();
+      }
+
+      function closeSemanticPopover() {
+        if (!semanticPopover) {
+          return;
+        }
+        semanticPopover.classList.add('hidden');
+        closeOptionEditor();
+        getAllSemanticInputs().forEach(function (rowInput) {
+          const cellButton = getSemanticCell(rowInput);
+          if (cellButton) {
+            cellButton.classList.remove('is-open');
+          }
+        });
+      }
+
+      function collectInitialSemanticTags() {
+        getAllSemanticInputs().forEach(function (input) {
+          collectSemanticCatalogFromValue(input.value || '');
+          renderSemanticDisplay(input);
+        });
+      }
+
+      loadSemanticCatalog();
+
+      async function verifyRow(row, options = {}) {
         const signature = row.getAttribute('data-signature');
         if (!signature) {
           return;
         }
 
-        const repeats = getRowRepeats(row);
-        let statusText = `Verified ${signature}`;
+        const repeatOverride = Number.isFinite(options.repeatOverride) ? options.repeatOverride : null;
+        const repeats = repeatOverride && repeatOverride > 0 ? repeatOverride : getRowRepeats(row);
+        const betweenMs = getBetweenCommandsMs();
+        let completed = 0;
+        let warning = '';
+
+        const initialEstimatedSendMs = clamp(movingAverageSendMs, minEstimatedSendMs, maxEstimatedSendMs);
+        const expectedTotalMs = (initialEstimatedSendMs * repeats) + (betweenMs * repeats);
+
+        setRowRunning(row, true);
+        startRowProgressLoop(row, {
+          running: true,
+          timerId: 0,
+          startedAt: performance.now(),
+          expectedTotalMs,
+          metaText: `etapa 1/${repeats} envio`
+        });
 
         try {
-          await replaySignature(signature, repeats);
-        } catch (error) {
-          statusText = `Checked ${signature} with warning: ${error.message}`;
+          let measuredSendTotalMs = 0;
+
+          for (let i = 0; i < repeats; i += 1) {
+            updateRowProgressState(row, function (state) {
+              state.metaText = `etapa ${i + 1}/${repeats} envio`;
+            });
+
+            try {
+              const sendStartedAt = performance.now();
+              await replaySignature(signature, 1);
+              const sendDuration = performance.now() - sendStartedAt;
+              measuredSendTotalMs += sendDuration;
+              movingAverageSendMs = clamp((movingAverageSendMs * 0.75) + (sendDuration * 0.25), minEstimatedSendMs, maxEstimatedSendMs);
+              completed += 1;
+              setBatchUi(batchRunning, `Sent ${signature} (${completed}/${repeats})`);
+
+              const observedAverage = measuredSendTotalMs / Math.max(completed, 1);
+              const remainingSends = repeats - completed;
+              const revisedExpectedMs = (observedAverage * completed)
+                + (movingAverageSendMs * remainingSends)
+                + (betweenMs * repeats);
+
+              updateRowProgressState(row, function (state) {
+                const elapsed = performance.now() - state.startedAt;
+                state.expectedTotalMs = Math.max(revisedExpectedMs, elapsed + 120);
+              });
+            } catch (error) {
+              warning = String(error && error.message ? error.message : error);
+              break;
+            }
+
+            updateRowProgressState(row, function (state) {
+              state.metaText = i < repeats - 1
+                ? `etapa ${i + 1}/${repeats} espera`
+                : `etapa ${i + 1}/${repeats} espera final`;
+            });
+            await new Promise(resolve => setTimeout(resolve, betweenMs));
+          }
         } finally {
-          row.classList.add('verified-row');
-          setBatchUi(batchRunning, statusText);
+          const completionProgress = repeats > 0 ? (completed / repeats) : 1;
+          const completionMeta = warning ? `falha na etapa ${Math.min(completed + 1, repeats)}/${repeats}` : `feito ${completed}/${repeats}`;
+          renderRowProgress(row, warning ? completionProgress : 1, completionMeta);
+
+          updateRowProgressState(row, function (state) {
+            state.running = false;
+          });
+          setRowRunning(row, false);
         }
+
+        row.classList.add('verified-row');
+
+        if (warning) {
+          setBatchUi(batchRunning, `Checked ${signature} with warning: ${warning}`);
+          return;
+        }
+
+        setBatchUi(batchRunning, `Verified ${signature} (${completed}/${repeats})`);
       }
 
       verifyLastBtn.addEventListener('click', async function () {
@@ -604,30 +2415,490 @@
         setBatchUi(true, `Running Verify All (${rows.length} rows)...`);
 
         let completed = 0;
+        const betweenMs = getBetweenCommandsMs();
         for (const row of rows) {
           if (batchPauseRequested) {
             setBatchUi(false, `Paused after ${completed}/${rows.length} rows`);
             return;
           }
 
-          await verifyRow(row);
+          await verifyRow(row, { repeatOverride: getRowRepeats(row) });
           completed += 1;
           setBatchUi(true, `Running Verify All... ${completed}/${rows.length}`);
 
-          await new Promise(resolve => setTimeout(resolve, 250));
+          if (completed < rows.length) {
+            await new Promise(resolve => setTimeout(resolve, betweenMs));
+          }
         }
 
         setBatchUi(false, `Verify All completed (${completed}/${rows.length})`);
       });
 
-      document.querySelectorAll('#profiles-table form[action="/replay"]').forEach(function (form) {
-        form.addEventListener('submit', function () {
-          const row = form.closest('tr');
-          if (row) {
-            row.classList.add('verified-row');
+      if (downloadProfilesCsvBtn) {
+        downloadProfilesCsvBtn.addEventListener('click', function () {
+          downloadTableAsCsv('profiles-table', 'comandos_reconhecidos_indexados.csv');
+        });
+      }
+
+      if (downloadLogsCsvBtn) {
+        downloadLogsCsvBtn.addEventListener('click', function () {
+          downloadTableAsCsv('captured-table', 'ultimos_comandos_logs.csv');
+        });
+      }
+
+      if (clearAllTablesBtn) {
+        clearAllTablesBtn.addEventListener('click', function () {
+          clearAllTables();
+        });
+      }
+
+      document.querySelectorAll('#profiles-table .row-play-btn').forEach(function (button) {
+        button.addEventListener('click', async function () {
+          if (batchRunning) {
+            setBatchUi(batchRunning, 'Batch in progress; aguarde ou pause o Verify All');
+            return;
           }
+
+          const row = button.closest('tr');
+          if (!row) {
+            return;
+          }
+
+          await verifyRow(row);
         });
       });
+
+      document.querySelectorAll('#profiles-table .semantic-input').forEach(function (input) {
+        input.dataset.savedTag = serializeSemanticTags(parseSemanticTags(input.value || ''));
+        const signature = String(input.getAttribute('data-signature') || '').trim();
+        const cellButton = getSemanticCell(input);
+
+        collectSemanticCatalogFromValue(input.value || '');
+        renderSemanticDisplay(input);
+
+        async function commitSemanticTag() {
+          const nextValue = serializeSemanticTags(parseSemanticTags(input.value || ''));
+          if (!signature || nextValue === String(input.dataset.savedTag || '')) {
+            renderSemanticDisplay(input);
+            return;
+          }
+
+          input.classList.add('saving');
+          try {
+            await saveSemanticTag(signature, nextValue);
+            input.value = nextValue;
+            input.dataset.savedTag = nextValue;
+            collectSemanticCatalogFromValue(nextValue);
+            renderSemanticDisplay(input);
+            setBatchUi(batchRunning, `Tag salva para ${signature}: ${nextValue || '(vazia)'}`);
+          } catch (error) {
+            setBatchUi(batchRunning, `Falha ao salvar tag ${signature}: ${error && error.message ? error.message : error}`);
+            input.value = String(input.dataset.savedTag || '');
+            renderSemanticDisplay(input);
+          } finally {
+            input.classList.remove('saving');
+          }
+        }
+
+        semanticCommitByInput.set(input, commitSemanticTag);
+
+        if (cellButton) {
+          cellButton.addEventListener('click', function () {
+            openSemanticPopover(input);
+          });
+        }
+      });
+
+      collectInitialSemanticTags();
+
+      if (semanticFilterInput) {
+        semanticFilterInput.addEventListener('input', function () {
+          if (!activeSemanticInput) {
+            return;
+          }
+          renderSemanticPopover(activeSemanticInput, semanticFilterInput.value || '');
+        });
+
+        semanticFilterInput.addEventListener('keydown', async function (event) {
+          if (event.key !== 'Enter' || !activeSemanticInput) {
+            return;
+          }
+
+          event.preventDefault();
+          const typedTag = normalizeSemanticTag(semanticFilterInput.value || '');
+          if (!typedTag) {
+            return;
+          }
+
+          semanticTagSet.add(typedTag);
+          ensureCatalogTag(typedTag);
+          const current = parseSemanticTags(activeSemanticInput.value || '');
+          if (!current.includes(typedTag)) {
+            current.push(typedTag);
+          }
+          setSemanticInputValue(activeSemanticInput, current);
+          renderSemanticDisplay(activeSemanticInput);
+          await commitSemanticInput(activeSemanticInput);
+
+          semanticFilterInput.value = '';
+          renderSemanticPopover(activeSemanticInput, '');
+        });
+      }
+
+      if (semanticEditorName) {
+        semanticEditorName.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            commitEditedOptionName();
+          }
+        });
+
+        semanticEditorName.addEventListener('blur', function () {
+          commitEditedOptionName();
+        });
+      }
+
+      if (semanticEditorDelete) {
+        semanticEditorDelete.addEventListener('click', async function () {
+          const targetTag = activeOptionTag;
+          if (!targetTag) {
+            return;
+          }
+
+          delete semanticCatalog[targetTag];
+          semanticTagSet.delete(targetTag);
+          saveSemanticCatalog();
+          await removeTagEverywhere(targetTag);
+          refreshAllSemanticDisplays();
+          closeOptionEditor();
+          if (activeSemanticInput) {
+            renderSemanticPopover(activeSemanticInput, semanticFilterInput.value || '');
+          }
+        });
+      }
+
+      document.addEventListener('mousedown', function (event) {
+        const target = event.target;
+        const insidePopover = semanticPopover && semanticPopover.contains(target);
+        const clickedCell = target.closest ? target.closest('[data-role="semantic-cell"]') : null;
+
+        if (clickedCell) {
+          return;
+        }
+
+        if (insidePopover) {
+          return;
+        }
+
+        if (activeSemanticInput) {
+          const inputToCommit = activeSemanticInput;
+          activeSemanticInput = null;
+          closeSemanticPopover();
+          commitSemanticInput(inputToCommit);
+        }
+      });
+
+      window.addEventListener('scroll', function () {
+        if (semanticPopover && !semanticPopover.classList.contains('hidden')) {
+          closeSemanticPopover();
+        }
+      }, true);
+
+      window.addEventListener('resize', function () {
+        if (semanticPopover && !semanticPopover.classList.contains('hidden')) {
+          closeSemanticPopover();
+        }
+      });
+
+      function inferSortType(headerLabel) {
+        const normalized = String(headerLabel || '').trim().toLowerCase();
+        if (normalized.includes('firstseen') || normalized.includes('lastseen')) {
+          return 'date';
+        }
+        if (normalized.includes('count') || normalized.includes('tamanho') || normalized.includes('stable')) {
+          return 'number';
+        }
+        return 'text';
+      }
+
+      function parseSortValue(raw, sortType) {
+        const text = String(raw || '').trim();
+
+        if (sortType === 'date') {
+          const timestamp = Date.parse(text);
+          return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+        }
+
+        if (sortType === 'number') {
+          const parsed = Number.parseFloat(text.replace(',', '.'));
+          return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
+        }
+
+        return text.toLowerCase();
+      }
+
+      function applyProfileSort(columnIndex, direction) {
+        const table = document.getElementById('profiles-table');
+        const tbody = table ? table.querySelector('tbody') : null;
+        if (!tbody) {
+          return;
+        }
+
+        const allRows = Array.from(tbody.querySelectorAll('tr'));
+        const dataRows = allRows.filter(function (row) {
+          return row.hasAttribute('data-signature');
+        });
+
+        if (!dataRows.length) {
+          return;
+        }
+
+        const headerCell = table.querySelector(`thead th:nth-child(${columnIndex + 1})`);
+        const headerLabel = headerCell ? headerCell.getAttribute('data-column-label') || '' : '';
+        const sortType = inferSortType(headerLabel);
+        const sign = direction === 'desc' ? -1 : 1;
+
+        dataRows.sort(function (rowA, rowB) {
+          const cellA = rowA.children[columnIndex];
+          const cellB = rowB.children[columnIndex];
+          const valueA = parseSortValue(cellA ? cellA.textContent : '', sortType);
+          const valueB = parseSortValue(cellB ? cellB.textContent : '', sortType);
+
+          if (valueA < valueB) {
+            return -1 * sign;
+          }
+          if (valueA > valueB) {
+            return 1 * sign;
+          }
+          return 0;
+        });
+
+        dataRows.forEach(function (row) {
+          tbody.appendChild(row);
+        });
+      }
+
+      function setupProfileSorters() {
+        const table = document.getElementById('profiles-table');
+        if (!table) {
+          return;
+        }
+
+        const headers = Array.from(table.querySelectorAll('thead th'));
+        let activeSort = { columnIndex: -1, direction: 'desc' };
+
+        headers.forEach(function (th, index) {
+          if (index === 0) {
+            return;
+          }
+
+          const label = String(th.textContent || '').trim();
+          th.classList.add('sortable-header');
+          th.setAttribute('data-column-label', label);
+          th.textContent = '';
+
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'sort-toggle';
+
+          const textSpan = document.createElement('span');
+          textSpan.textContent = label;
+
+          const arrowSpan = document.createElement('span');
+          arrowSpan.className = 'sort-arrow';
+          arrowSpan.textContent = '↕';
+          arrowSpan.title = 'Sort';
+
+          button.appendChild(textSpan);
+          button.appendChild(arrowSpan);
+          th.appendChild(button);
+
+          button.addEventListener('click', function () {
+            const nextDirection = (activeSort.columnIndex === index && activeSort.direction === 'desc') ? 'asc' : 'desc';
+            activeSort = { columnIndex: index, direction: nextDirection };
+
+            headers.forEach(function (headerCell, headerIndex) {
+              const arrow = headerCell.querySelector('.sort-arrow');
+              if (!arrow || headerIndex === 0) {
+                return;
+              }
+
+              if (headerIndex === activeSort.columnIndex) {
+                arrow.textContent = activeSort.direction === 'desc' ? '↑' : '↓';
+                arrow.title = activeSort.direction === 'desc' ? 'Last (desc)' : 'First (asc)';
+              } else {
+                arrow.textContent = '↕';
+                arrow.title = 'Sort';
+              }
+            });
+
+            applyProfileSort(index, nextDirection);
+            setBatchUi(batchRunning, `Sorted by ${label}: ${nextDirection === 'desc' ? 'Last (↑)' : 'First (↓)'}`);
+          });
+        });
+      }
+
+      function applyCapturedSort(columnIndex, direction) {
+        const table = document.getElementById('captured-table');
+        const tbody = table ? table.querySelector('tbody') : null;
+        if (!tbody) {
+          return;
+        }
+
+        const allRows = Array.from(tbody.querySelectorAll('tr'));
+        const dataRows = allRows.filter(function (row) {
+          return row.children.length > columnIndex;
+        });
+
+        if (!dataRows.length) {
+          return;
+        }
+
+        const sign = direction === 'desc' ? -1 : 1;
+        dataRows.sort(function (rowA, rowB) {
+          const cellA = rowA.children[columnIndex];
+          const cellB = rowB.children[columnIndex];
+          const rawA = cellA ? (cellA.getAttribute('data-sort-value') || cellA.textContent) : '';
+          const rawB = cellB ? (cellB.getAttribute('data-sort-value') || cellB.textContent) : '';
+          const valueA = parseSortValue(rawA, 'date');
+          const valueB = parseSortValue(rawB, 'date');
+
+          if (valueA < valueB) {
+            return -1 * sign;
+          }
+          if (valueA > valueB) {
+            return 1 * sign;
+          }
+          return 0;
+        });
+
+        dataRows.forEach(function (row) {
+          tbody.appendChild(row);
+        });
+      }
+
+      function setupCapturedTimestampSorter() {
+        const table = document.getElementById('captured-table');
+        if (!table) {
+          return;
+        }
+
+        const headers = Array.from(table.querySelectorAll('thead th'));
+        const timestampIndex = headers.findIndex(function (th) {
+          return String(th.textContent || '').trim().toLowerCase() === 'timestamp';
+        });
+
+        if (timestampIndex < 0) {
+          return;
+        }
+
+        const headerCell = headers[timestampIndex];
+        const label = String(headerCell.textContent || '').trim();
+        headerCell.classList.add('sortable-header');
+        headerCell.textContent = '';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'sort-toggle';
+
+        const textSpan = document.createElement('span');
+        textSpan.textContent = label;
+
+        const arrowSpan = document.createElement('span');
+        arrowSpan.className = 'sort-arrow';
+        arrowSpan.textContent = '↕';
+        arrowSpan.title = 'Sort';
+
+        button.appendChild(textSpan);
+        button.appendChild(arrowSpan);
+        headerCell.appendChild(button);
+
+        let direction = null;
+        button.addEventListener('click', function () {
+          direction = direction === 'desc' ? 'asc' : 'desc';
+          arrowSpan.textContent = direction === 'desc' ? '↑' : '↓';
+          arrowSpan.title = direction === 'desc' ? 'Last (desc)' : 'First (asc)';
+          applyCapturedSort(timestampIndex, direction);
+          setBatchUi(batchRunning, `Captured sorted by ${label}: ${direction === 'desc' ? 'Last (↑)' : 'First (↓)'}`);
+        });
+      }
+
+      setupProfileSorters();
+      setupCapturedTimestampSorter();
+
+      // Real-time capture streaming
+      function startCaptureStream() {
+        const eventSource = new EventSource('/stream/captures');
+        
+        eventSource.onmessage = function(event) {
+          try {
+            const capture = JSON.parse(event.data);
+            addNewCaptureRow(capture);
+          } catch (error) {
+            console.error('Failed to parse capture event:', error);
+          }
+        };
+        
+        eventSource.onerror = function(error) {
+          console.error('Stream error:', error);
+          eventSource.close();
+          // Reconnect after 3 seconds
+          setTimeout(startCaptureStream, 3000);
+        };
+      }
+
+      function addNewCaptureRow(capture) {
+        const table = document.getElementById('captured-table');
+        if (!table) return;
+        
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return;
+        
+        // Check if this row already exists (by ID)
+        const existingRow = tbody.querySelector(`tr[data-capture-id="${capture.ID}"]`);
+        if (existingRow) return;
+        
+        // Remove "No IR data yet" placeholder if it exists
+        const placeholderRow = tbody.querySelector('tr td[colspan="10"]');
+        if (placeholderRow) {
+          placeholderRow.closest('tr').remove();
+        }
+        
+        // Create new row
+        const row = document.createElement('tr');
+        row.setAttribute('data-capture-id', capture.ID);
+        
+        // Insert at the top (prepend) for most recent first
+        const cells = [
+          { value: capture.Timestamp, sortValue: capture.Timestamp, className: 'nowrap' },
+          { value: capture.ID, className: 'nowrap' },
+          { value: capture.Fonte, className: 'mono' },
+          { value: capture.Protocolo, className: '' },
+          { value: capture.SemanticTag || 'unknown', className: 'nowrap' },
+          { value: capture.Hexadecimal, className: 'mono' },
+          { value: capture.Tamanho, className: 'nowrap' },
+          { value: capture.Classe, className: 'nowrap' },
+          { value: capture.Assinatura, className: 'mono' },
+          { value: capture.ReplayJSON, className: 'mono' }
+        ];
+        
+        cells.forEach(function(cellData) {
+          const td = document.createElement('td');
+          if (cellData.sortValue) {
+            td.setAttribute('data-sort-value', cellData.sortValue);
+          }
+          if (cellData.className) {
+            td.className = cellData.className;
+          }
+          td.textContent = cellData.value;
+          row.appendChild(td);
+        });
+        
+        tbody.insertBefore(row, tbody.firstChild);
+      }
+
+      // Start the real-time stream
+      startCaptureStream();
 
       pollMonitor();
       setInterval(pollMonitor, 1000);
